@@ -6,6 +6,8 @@
 #ifndef SETTING_IMP
 #define SETTINGS_IMP
 
+#include "DEFS.h"
+
 // Defaults as defined in FinalProject pdf
 #define SETTINGS_DEFAULT_GAME_MODE  (1)
 #define SETTINGS_DEFAULT_DIFFICULTY (2)

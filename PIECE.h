@@ -8,6 +8,8 @@
 #ifndef PIECE_IMP
 #define PIECE_IMP
 
+#include "DEFS.h"
+
 /** 
  * Possible piece types. 
  */

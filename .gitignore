@@ -56,4 +56,7 @@ dkms.conf
 *.vt*
 
 # Windows file
-desktop.ini
+desktop.inii
+
+# vim file
+*.swp

@@ -17,7 +17,7 @@
 /**
  * Allowed castle types for bitmask
  */
-typedef struct GAME_CASTLE_BM_S
+typedef enum GAME_CASTLE_BM_S
 {
     GAME_CASTLE_W_KINGSIDE  = 1,
     GAME_CASTLE_W_QUEENSIDE = 2,
@@ -29,7 +29,7 @@ typedef struct GAME_CASTLE_BM_S
 /**
  * Allowed special behaviour types for bitmask
  */
-typedef struct GAME_SPECIAL_BM_S
+typedef enum GAME_SPECIAL_BM_S
 {
     GAME_SPECIAL_CAPTURE        = 1,
     GAME_SPECIAL_EP_CAPTURE     = 2,
@@ -90,7 +90,7 @@ typedef struct GAME_move_full_s
  */
 typedef struct GAME_board_s
 {
-    PIECE_type_e pieces[GAME_BOARD_ARR_SIZE];        // array of pieces in squares
+    PIECE_TYPE_E pieces[GAME_BOARD_ARR_SIZE];        // array of pieces in squares
     int colors[GAME_BOARD_ARR_SIZE];                 // array of colors of pieces in squares
     square ep;                                       // Square into which taking with en-passant is possible
     int castle_bm;                                   // Bitmask indicating available castling (see GAME_CASTLE_BM_E)
@@ -105,7 +105,7 @@ typedef struct GAME_board_s
  * @return GAME_board_t* board for game at move 0 with white to 
  *         play.
  */
-GAME_board_t * GAME_new_board()
+GAME_board_t * GAME_new_board();
 
 /**
  * Free the board and all resources allocated to it (NOT 

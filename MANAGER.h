@@ -71,11 +71,11 @@ typedef struct MANAGER_agent_command_s
  * command type. 
  * 
  */
-union MANAGER_agent_command_output_s
+typedef struct  MANAGER_agent_command_output_s
 {
     BOOL has_output;
     union {
-        SETTINGS_CHANGE_RESULTS_E settings_change_result; // CHANGE_SETTING_COMMAND
+        SETTINGS_CHANGE_RESULT_E settings_change_result; // CHANGE_SETTING_COMMAND
         GAME_MOVE_RESULTS_E move_result; // MOVE command
         GAME_move_full_t * possible_moves; // GET_MOVES command
         BOOL load_succesful; // LOAD command (not yet supported)
@@ -100,11 +100,11 @@ typedef struct MANAGER_agent_s
 /**
  * The game managing object.
  */
-typedef MANAGER_managed_game_s
+typedef struct MANAGER_managed_game_s
 {
     MANAGER_STATE_E state;                    // current state of the manager
     GAME_board_t board;                       // board holding the 
-    SETTINGS_settings_t                       // settings used in the game
+    SETTINGS_settings_t settings;             // settings used in the game
     MANAGER_agent_t settings_agent;           // agent used in settings state
     MANAGER_agent_t play_agents[NUM_PLAYERS]; // agent BLACK and agent WHITE will be called respectively
 
