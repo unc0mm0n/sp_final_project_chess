@@ -11,6 +11,7 @@
 #include "DEFS.h"
 
 #define PIECE_OFFSET_SENTINEL (0)
+#define PIECE_MAX_OFFSETS     (9) // 1 for sentinel
 
 /** 
  * Possible piece types. 
@@ -34,12 +35,12 @@ typedef enum PIECE_TYPE_S
  */
 typedef struct PIECE_desc_s
 {
-    PIECE_TYPE_E    type;           // piece type
-    int             value;          // Value of AI evaluation [YVW TODO: Maybe move from here]
-    char            letters[2];     // letters per color
-    int             offsets[9];     // possible move offsets + sentinel value 0.
-    BOOL            slides;         // if TRUE, the piece can move it's offsets multiple times
-    BOOL            can_promote_to; // True if the piece can be promoted to.
+    PIECE_TYPE_E    type;                           // piece type
+    int             value;                          // Value of AI evaluation [YVW TODO: Maybe move to AI]
+    char            letters[NUM_PLAYERS];           // letters per color      [YVW TODO: Maybe move to CLI]
+    int             offsets[PIECE_MAX_OFFSETS];     // possible move offsets + sentinel value 0.
+    BOOL            slides;                         // if TRUE, the piece can move it's offsets multiple times
+    BOOL            can_promote_to;                 // True if the piece can be promoted to.
 } PIECE_desc_t;
 
 /** 
@@ -69,14 +70,14 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
         .type           = PIECE_TYPE_KNIGHT,
         .value          = 3,
         .letters        = { 'N', 'n'},
-        .offsets        = { SQUARE_UP(SQUARE_UP(SQUARE_LEFT(0))),
-                            SQUARE_UP(SQUARE_UP(SQUARE_RIGHT(0))),
-                            SQUARE_LEFT(SQUARE_LEFT(SQUARE_UP(0))),
-                            SQUARE_LEFT(SQUARE_LEFT(SQUARE_DOWN(0))),
-                            SQUARE_DOWN(SQUARE_DOWN(SQUARE_LEFT(0))),
-                            SQUARE_DOWN(SQUARE_DOWN(SQUARE_RIGHT(0))),
-                            SQUARE_RIGHT(SQUARE_RIGHT(SQUARE_UP(0))),
-                            SQUARE_RIGHT(SQUARE_RIGHT(SQUARE_DOWN(0))),
+        .offsets        = { SQ_UP(SQ_UP(SQ_LEFT(0))),
+                            SQ_UP(SQ_UP(SQ_RIGHT(0))),
+                            SQ_LEFT(SQ_LEFT(SQ_UP(0))),
+                            SQ_LEFT(SQ_LEFT(SQ_DOWN(0))),
+                            SQ_DOWN(SQ_DOWN(SQ_LEFT(0))),
+                            SQ_DOWN(SQ_DOWN(SQ_RIGHT(0))),
+                            SQ_RIGHT(SQ_RIGHT(SQ_UP(0))),
+                            SQ_RIGHT(SQ_RIGHT(SQ_DOWN(0))),
                             PIECE_OFFSET_SENTINEL 
                           },
         .slides         = FALSE,
@@ -86,10 +87,10 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
         .type           = PIECE_TYPE_BISHOP,
         .value          = 3,
         .letters        = { 'B', 'b'},
-        .offsets        = { SQUARE_UP(SQUARE_LEFT(0)),
-                            SQUARE_UP(SQUARE_RIGHT(0)),
-                            SQUARE_DOWN(SQUARE_LEFT(0)),
-                            SQUARE_DOWN(SQUARE_RIGHT(0)),
+        .offsets        = { SQ_UP(SQ_LEFT(0)),
+                            SQ_UP(SQ_RIGHT(0)),
+                            SQ_DOWN(SQ_LEFT(0)),
+                            SQ_DOWN(SQ_RIGHT(0)),
                             PIECE_OFFSET_SENTINEL
                           },
         .slides         = TRUE,
@@ -99,10 +100,10 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
         .type           = PIECE_TYPE_ROOK,
         .value          = 5,
         .letters        = { 'R', 'r'},
-        .offsets        = { SQUARE_UP(0),
-                            SQUARE_RIGHT(0),
-                            SQUARE_LEFT(0),
-                            SQUARE_DOWN(0),
+        .offsets        = { SQ_UP(0),
+                            SQ_RIGHT(0),
+                            SQ_LEFT(0),
+                            SQ_DOWN(0),
                             PIECE_OFFSET_SENTINEL
                           },
         .slides         = TRUE,
@@ -112,14 +113,14 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
         .type           = PIECE_TYPE_EMPTY,
         .value          = 9,
         .letters        = { 'Q', 'q'},
-        .offsets        = { SQUARE_UP(0),
-                            SQUARE_RIGHT(0),
-                            SQUARE_LEFT(0),
-                            SQUARE_DOWN(0),
-                            SQUARE_UP(SQUARE_LEFT(0)),
-                            SQUARE_UP(SQUARE_RIGHT(0)),
-                            SQUARE_DOWN(SQUARE_LEFT(0)),
-                            SQUARE_DOWN(SQUARE_RIGHT(0)),
+        .offsets        = { SQ_UP(0),
+                            SQ_RIGHT(0),
+                            SQ_LEFT(0),
+                            SQ_DOWN(0),
+                            SQ_UP(SQ_LEFT(0)),
+                            SQ_UP(SQ_RIGHT(0)),
+                            SQ_DOWN(SQ_LEFT(0)),
+                            SQ_DOWN(SQ_RIGHT(0)),
                             PIECE_OFFSET_SENTINEL
                           },
         .slides         = TRUE,
@@ -129,14 +130,14 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
         .type           = PIECE_TYPE_EMPTY,
         .value          = 400,
         .letters        = { 'K', 'k'},
-        .offsets        = { SQUARE_UP(0),
-                            SQUARE_RIGHT(0),
-                            SQUARE_LEFT(0),
-                            SQUARE_DOWN(0),
-                            SQUARE_UP(SQUARE_LEFT(0)),
-                            SQUARE_UP(SQUARE_RIGHT(0)),
-                            SQUARE_DOWN(SQUARE_LEFT(0)),
-                            SQUARE_DOWN(SQUARE_RIGHT(0)),
+        .offsets        = { SQ_UP(0),
+                            SQ_RIGHT(0),
+                            SQ_LEFT(0),
+                            SQ_DOWN(0),
+                            SQ_UP(SQ_LEFT(0)),
+                            SQ_UP(SQ_RIGHT(0)),
+                            SQ_DOWN(SQ_LEFT(0)),
+                            SQ_DOWN(SQ_RIGHT(0)),
                             PIECE_OFFSET_SENTINEL
                           },
         .slides         = FALSE,

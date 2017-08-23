@@ -90,7 +90,7 @@ typedef struct  MANAGER_agent_command_output_s
 typedef struct MANAGER_agent_s
 {
     // Will be called every game loop iteration to get command from agent. Borad will be NULL if not in PLAY state.
-    MANAGER_agent_command_t(*prompt_command)(MANAGER_STATE_E state, GAME_board_t * board); 
+    MANAGER_agent_command_t (*prompt_command)(MANAGER_STATE_E state, const GAME_board_t* board, const SETTINGS_settings_t* settings); 
 
      // Will be called with the output of the command above, the has_output flag specifies whether any output was given.
      void (*handle_command_result)(MANAGER_agent_command_t command, MANAGER_agent_command_output_t result);
