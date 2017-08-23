@@ -31,7 +31,7 @@ typedef enum PIECE_TYPE_S
 typedef struct PIECE_desc_s
 {
     PIECE_TYPE_E    type;           // piece type
-    int             value;          // Value of AI evaluation
+    int             value;          // Value of AI evaluation [YVW TODO: Maybe move from here]
     char            letters[2];     // letters per color
     int             offsets[9];     // possible move offsets + sentinel value 0.
     BOOL            can_promote_to; // True if the piece can be promoted to.
