@@ -12,6 +12,16 @@
 #include "SETTINGS.h"
 
 /**
+ * Possible states for the manager
+ */
+typedef enum MANAGER_STATE_S
+{
+    MANAGER_STATE_SETTINGS,
+    MANAGER_STATE_PLAY,
+    MANAGER_STATE_INVALID
+} MANAGER_STATE_E;
+
+/**
  * All available command types to the manager.
  */
 typedef enum MANAGER_COMMAND_TYPES_S
@@ -79,19 +89,13 @@ union MANAGER_agent_command_output_s
  */
 typedef struct MANAGER_agent_s
 {
- // Will be called every game loop iteration to get command from agent
- MANAGER_agent_command_t (*prompt_command)();
+    // Will be called every game loop iteration to get command from agent. Borad will be NULL if not in PLAY state.
+    MANAGER_agent_command_t(*prompt_command)(MANAGER_STATE_E state, GAME_board_t * board); 
 
- // Will be called with the output of the command above, the has_output flag specifies whether any output was given.
- void (*handle_command_result)(MANAGER_agent_command_t command, MANAGER_agent_command_output_t result);
+     // Will be called with the output of the command above, the has_output flag specifies whether any output was given.
+     void (*handle_command_result)(MANAGER_agent_command_t command, MANAGER_agent_command_output_t result);
 } MANAGER_agent_t;
 
-typedef enum MANAGER_STATE_S
-{
-    MANAGER_STATE_SETTINGS,
-    MANAGER_STATE_PLAY,
-    MANAGER_STATE_INVALID
-} MANAGER_STATE_E;
 
 /**
  * The game managing object.
