@@ -10,9 +10,15 @@
 #include "PIECE.h"
 #include "DEFS.h"
 
-#define GAME_BOARD_ARR_SIZE     (128) // Size of board arrays.
-#define GAME_HISTORY_SIZE       (400) // Up to 200 moves should almost always be enough..
-#define GAME_MAX_POSSIBLE_MOVES (65)  // Maximum possible moves of a theoretical piece + sentinel
+#define GAME_BOARD_ARR_SIZE     (128)  // Size of board arrays.
+#define GAME_HISTORY_SIZE       (400)   // counted in half-moves, which is 1 player move.
+                                       // enough for search of depth 5 and more than the required undos.
+#define GAME_MAX_POSSIBLE_MOVES (65)   // Maximum possible moves of a theoretical piece + sentinel
+
+#define GAME_NO_EP              ((square) 0x88) // value which cannot pass SQUARE_IS_LEGAL for no ep
+
+// Disable castle c in bitmask bm
+#define DISABLE_CASTLE(bm, c)   ((bm) &(~ (c)))
 
 /**
  * Allowed castle types for bitmask
@@ -25,6 +31,7 @@ typedef enum GAME_CASTLE_BM_S
     GAME_CASTLE_B_QUEENSIDE = 8,
     GAME_CASTLE_ALL         = 0xf  // Used to initialize the game.
 } GAME_CASTLE_BM_E;
+
 
 /**
  * Allowed special behaviour types for bitmask
@@ -86,12 +93,14 @@ typedef struct GAME_move_full_s
 } GAME_move_full_t;
 
 /**
- * Game board object to hold a complete game of chess
+ * Game board object to hold a complete game of chess.
+ *
+ * Size: 9k, 8k of which is hisotry with default value 400.
  */
 typedef struct GAME_board_s
 {
     PIECE_TYPE_E pieces[GAME_BOARD_ARR_SIZE];        // array of pieces in squares
-    int colors[GAME_BOARD_ARR_SIZE];                 // array of colors of pieces in squares
+    COLOR colors[GAME_BOARD_ARR_SIZE];                 // array of colors of pieces in squares
     square ep;                                       // Square into which taking with en-passant is possible
     int castle_bm;                                   // Bitmask indicating available castling (see GAME_CASTLE_BM_E)
     int turn;                                        // Current turn of the game, starts at 1.
@@ -172,9 +181,6 @@ BOOL GAME_player_is_in_check(COLOR color);
  *  
  * @return COLOR the color of the player to play 
  */
-inline COLOR GAME_current_player(GAME_board_t * p_a_board)
-{
-    return (p_a_board->turn & 1);
-}
+inline COLOR GAME_current_player(GAME_board_t * p_a_board);
 
 #endif /*GAME_IMP*/

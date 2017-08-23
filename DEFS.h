@@ -14,7 +14,8 @@
 #define FALSE (0)
 
 #define COLOR          int
-#define NO_COLOR       (-1)          // used to indicate that it's neither white nur black.
+#define NO_COLOR       (4)           // used to indicate that it's neither white nur black. 
+                                     // (4 is used to be far enough with no shared bits)
 #define BLACK          (0)           // used to indicate the black player.
 #define WHITE          (1)           // used to indicate the white player.
 #define NUM_PLAYERS    (2)           // number of players in a game of chess.

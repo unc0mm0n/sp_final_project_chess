@@ -1,5 +1,6 @@
 CC=gcc
-O_FILES=PIECE.o GAME.o MANAGER.o SETTINGS.o
+O_FILES=GAME.o #MANAGER.o SETTINGS.o
+H_FILES=DEFS.h PIECE.h # all files which are only headers will trigger compilation for everything on change.
 C_FLAGS=-std=c99 -Wall -Wextra -g
 
 all: chessprog
@@ -7,7 +8,7 @@ all: chessprog
 chessprog: $(O_FILES)
 	$(CC) -o $@ $^
 
-%.o: %.c
+%.o: %.c %.h $(H_FILES)
 	$(CC) -c $<
 
 .PHONY: clean
