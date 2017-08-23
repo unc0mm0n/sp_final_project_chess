@@ -94,7 +94,7 @@ typedef struct GAME_board_s
     int colors[GAME_BOARD_ARR_SIZE];                 // array of colors of pieces in squares
     square ep;                                       // Square into which taking with en-passant is possible
     int castle_bm;                                   // Bitmask indicating available castling (see GAME_CASTLE_BM_E)
-    int turn;                                        // Current turn of the game
+    int turn;                                        // Current turn of the game, starts at 1.
     GAME_RESULT_E result;                            // result of the game.
     GAME_move_full_t history[GAME_HISTORY_SIZE];     // Game history to undo moves
 } GAME_board_t;
@@ -165,5 +165,16 @@ GAME_move_full_t * GAME_get_all_moves(GAME_board_t * p_a_board, square a_from);
  */
 BOOL GAME_player_is_in_check(COLOR color);
 
+/** 
+ * Return the color of the current player to play. 
+ *  
+ * @param p_a_board pointer to board 
+ *  
+ * @return COLOR the color of the player to play 
+ */
+inline COLOR GAME_current_player(GAME_board_t * p_a_board)
+{
+    return (p_a_board->turn & 1);
+}
 
 #endif /*GAME_IMP*/
