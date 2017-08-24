@@ -652,6 +652,18 @@ int main()
 
     printf("color: %d other_color: %d not_color: %d other_not_color: %d\n",
             WHITE, OTHER_COLOR(WHITE), NO_COLOR, OTHER_COLOR(NO_COLOR));
+
+    /* check and pinned piece test */
+     
+    _GAME_test_play(p_board,5,2,5,4); //e4
+    _GAME_test_play(p_board,5,7,5,5); //e5
+    _GAME_test_play(p_board,4,2,4,3); //d3
+    _GAME_test_play(p_board,6,8,2,4); //Bd4+
+    _GAME_test_play(p_board,1,2,1,3); //a3 (illegal)
+    _GAME_test_play(p_board,2,1,3,3); //Nc3
+    _GAME_test_play(p_board,4,7,4,5); //d5
+    _GAME_test_play(p_board,3,3,4,5); //Nxd5 (illegal)
+    /* Enpassant casstle basic check test
     _GAME_test_play(p_board, 5,2,5,4);
     _GAME_test_play(p_board, 5,2,5,4);
     _GAME_test_play(p_board, 5,7,5,5);
@@ -672,4 +684,5 @@ int main()
     _GAME_test_play(p_board, 5,7,6,8);
     _GAME_test_play(p_board, 7,7,7,6);
     _GAME_test_play(p_board, 6,8,7,8);
+    */
 }
