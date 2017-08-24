@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <stdio.h> // tmp
 
+void CLI_print_board(const GAME_board_t*);
 /**
  * private function to initialize a new board
  */
@@ -55,8 +56,8 @@ void _GAME_init_color(GAME_board_t* p_board)
     memcpy (p_board->colors, init_colors, sizeof(p_board->colors));
 }
 
-//#define PRUNE(cond,move) if(!(cond)){(move).valid = FALSE; return (move);}   // helper local define to prune moves.
-#define PRUNE(cond,move) assert(cond); // debug prune
+#define PRUNE(cond,move) if(!(cond)){(move).valid = FALSE; return (move);}   // helper local define to prune moves.
+//#define PRUNE(cond,move) assert(cond); // debug prune
 
 /**
  * Return true if the piece can theoretically move there on an 
@@ -68,6 +69,8 @@ void _GAME_init_color(GAME_board_t* p_board)
  */
 BOOL _GAME_is_allowed_piece_movement(const GAME_board_t* p_a_board, GAME_move_t a_move)
 {
+    assert(SQ_IS_LEGAL(a_move.to));
+    assert(SQ_IS_LEGAL(a_move.from));
     PIECE_TYPE_E piece = p_a_board->pieces[a_move.from];
     PIECE_desc_t piece_desc = PIECE_desc_lut[piece];
     for (int i = 0; i < PIECE_MAX_OFFSETS; i++)
@@ -80,9 +83,9 @@ BOOL _GAME_is_allowed_piece_movement(const GAME_board_t* p_a_board, GAME_move_t 
         square tmp = a_move.to; // currently looked at square.
         int offset = piece_desc.offsets[i]; // offset to move the piece at each step.
 
+        tmp += offset;
         while (SQ_IS_LEGAL(tmp)) 
         {
-            tmp += offset;
             if (tmp == a_move.from)
             {
                 return TRUE;        // We have found a move sequence leading to the destination.
@@ -94,12 +97,41 @@ BOOL _GAME_is_allowed_piece_movement(const GAME_board_t* p_a_board, GAME_move_t 
             if (!piece_desc.slides) // Can only move once in this offset, switch to next offset.
             {
                 break;
-            }      
+            }
+
+            tmp += offset;
         }
 
     }
 
     return FALSE;
+}
+
+/**
+ * Return true if the current player has no legal moves.
+ */
+BOOL _GAME_no_moves(GAME_board_t * p_a_board)
+{
+    GAME_move_full_t* p_moves;
+    for (int file = 0; file < NUM_FILES; file++)
+    {
+        for (int rank = 0; rank < NUM_RANKS; rank++)
+        {
+            p_moves = GAME_gen_moves_from_sq(p_a_board, SQ_FROM_FILE_RANK(file, rank));
+
+            if (p_moves != NULL)
+            {
+                if (p_moves[0].valid)
+                {
+                    free(p_moves);
+                    return TRUE;
+                }
+                free(p_moves);
+            }
+        }
+    }
+    return FALSE;
+
 }
 
 /**
@@ -168,6 +200,7 @@ GAME_move_full_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_move_t
     full_move.move = a_move;
 
     BOOL is_capture = (p_a_board->colors[a_move.to] == OTHER_COLOR(player));
+    PRUNE(p_a_board->colors[a_move.to] != player, full_move)  // can never more to a space occupied by own piece
 
     if (p_a_board->pieces[a_move.from] == PIECE_TYPE_PAWN) // Pawns get special treatment
     {
@@ -301,12 +334,12 @@ BOOL GAME_is_attacking(const GAME_board_t* p_a_board, COLOR color, square sq)
         sq_l = SQ_UP_LEFT(sq);
         sq_r = SQ_UP_RIGHT(sq);
     }
-
-    if (p_a_board->pieces[sq_l] == PIECE_TYPE_PAWN && p_a_board->colors[sq_l] == color) 
+    
+    if (SQ_IS_LEGAL(sq_l) && p_a_board->pieces[sq_l] == PIECE_TYPE_PAWN && p_a_board->colors[sq_l] == color) 
     {
         return TRUE;
     }
-    if (p_a_board->pieces[sq_r] == PIECE_TYPE_PAWN && p_a_board->colors[sq_r] == color) 
+    if (SQ_IS_LEGAL(sq_r) && p_a_board->pieces[sq_r] == PIECE_TYPE_PAWN && p_a_board->colors[sq_r] == color) 
     {
         return TRUE;
     }
@@ -362,7 +395,6 @@ BOOL GAME_is_checked(const GAME_board_t* p_a_board, COLOR color)
             square to = SQ_FROM_FILE_RANK(file, rank);
             if (p_a_board->pieces[to] == PIECE_TYPE_KING && p_a_board->colors[to]  == color)
             {
-                printf("Player %d king found at %x\n", color, to);
                 // and check if the opponent is attacking it.
                 return GAME_is_attacking(p_a_board, OTHER_COLOR(color), to);
             }
@@ -381,7 +413,7 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
     {
         return GAME_MOVE_RESULT_ILLEGALE_SQUARE;
     }
-    printf("playing: %d %d %d %d\n", player, a_move.from, a_move.to, p_a_board->colors[a_move.from]);
+    //printf("playing: %d %d %d %d\n", player, a_move.from, a_move.to, p_a_board->colors[a_move.from]);
     if (p_a_board->colors[a_move.from] != player) // empty or opponent piece
     {
         return GAME_MOVE_RESULT_NO_PIECE;
@@ -503,15 +535,13 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
     // finally we can check if the move leads to a legal position
     if (GAME_is_checked(p_a_board, player))
     {
-        printf("king was checked, undoing");
         GAME_undo_move(p_a_board); // All this was for naught.
         return GAME_MOVE_RESULT_ILLEGAL_MOVE;
     }
 
     // and update final parameters in the move history.
-    printf("Current player: %d, other player: %d, is_in_check: %d, is_attacking: %d\n", GAME_current_player(p_a_board), OTHER_COLOR(player), GAME_is_checked(p_a_board, OTHER_COLOR(player)), GAME_is_attacking(p_a_board, OTHER_COLOR(player), a_move.to));
-    printf("Is attacking g8: %d\n", GAME_is_attacking(p_a_board, player, G8));
-    p_a_board->history[p_a_board->turn - 1].move.special_bm |= GAME_SPECIAL_CHECK * GAME_is_checked(p_a_board, OTHER_COLOR(player)); 
+    BOOL is_check = GAME_is_checked(p_a_board, OTHER_COLOR(player));
+    p_a_board->history[p_a_board->turn - 1].move.special_bm |= GAME_SPECIAL_CHECK * is_check; 
     p_a_board->history[p_a_board->turn - 1].move.special_bm |= GAME_SPECIAL_UNDER_ATTACK * GAME_is_attacking(p_a_board, OTHER_COLOR(player), a_move.to);
 
     return GAME_MOVE_RESULT_SUCCESS;
@@ -522,10 +552,12 @@ GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board)
     /* this is really similar to a normal move, but in reverse and without legality checking. */
     p_a_board->turn--;  // update turn
     GAME_history_t hist = p_a_board->history[p_a_board->turn]; // fetch history
-
+    
     // update parameters
     memcpy(p_a_board->castle_bm, hist.castle_bm, sizeof(p_a_board->castle_bm));
     p_a_board->ep = hist.ep;
+
+    p_a_board->result = GAME_RESULT_PLAYING; // and make sure game is not marked as over
 
     /* reverse move */
     COLOR moving_player = GAME_current_player(p_a_board);
@@ -596,8 +628,88 @@ GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board)
         p_a_board->pieces[rook_to]    = PIECE_TYPE_ROOK;
         p_a_board->colors[rook_to]    = moving_player;
     }
-
+    
     return last_move;
+}
+
+GAME_RESULT_E GAME_update_result(GAME_board_t* p_a_board)
+{
+
+    GAME_RESULT_E new_result;
+
+    if (_GAME_no_moves(p_a_board)) // if a player has no move
+    {
+        if (GAME_is_checked(p_a_board, WHITE)) // either white is mated
+        {
+            assert(GAME_current_player(p_a_board) == WHITE); // in which case it should be his turn
+            new_result = GAME_RESULT_BLACK_WINS;
+        }
+        else if (GAME_is_checked(p_a_board, BLACK)) // or black is mated
+        {
+            assert(GAME_current_player(p_a_board) == BLACK); // in which case it should be his turn
+            new_result = GAME_RESULT_WHITE_WINS;
+        }
+        else // or it's a stalemate
+        {
+            new_result = GAME_RESULT_DRAW;
+        }
+
+        p_a_board->result = new_result;
+        return new_result;
+    }
+    else
+    {
+        assert(p_a_board->result == GAME_RESULT_PLAYING); // if any player can play the game shouldn't be over
+                                                          // (where we ignore 3-fold repetition and 50 moves draw)
+        return GAME_RESULT_PLAYING;
+    }
+}
+
+GAME_move_full_t* GAME_gen_moves_from_sq(GAME_board_t* p_a_board, square a_from)
+{
+    if (p_a_board->colors[a_from] != GAME_current_player(p_a_board))
+    {
+        return NULL;
+    }
+
+    GAME_move_full_t* p_moves = (GAME_move_full_t *)calloc(GAME_MAX_POSSIBLE_MOVES, sizeof(GAME_move_full_t));
+    int count = 0;
+    for (int rank=0; rank < NUM_RANKS; rank++)
+    {
+        for (int file=0; file < NUM_FILES; file++)
+        {
+            GAME_move_t move = {.from = a_from, .to=SQ_FROM_FILE_RANK(file, rank), .promote=PIECE_TYPE_QUEEN};
+            GAME_MOVE_RESULTS_E move_res = GAME_make_move(p_a_board, move);
+            if (move_res == GAME_MOVE_RESULT_SUCCESS)
+            {
+                // a succesfull move was made. Undo and remember it.
+                p_moves[count] = GAME_undo_move(p_a_board);
+                count++;
+
+                // If the move is a promotion, need to test all possible promotions
+                if (p_a_board->pieces[a_from] == PIECE_TYPE_PAWN && (IS_BLACK_LAST_RANK(a_from) || IS_WHITE_LAST_RANK(a_from)))
+                {
+                    for (int piece_type = PIECE_TYPE_KNIGHT; piece_type < PIECE_TYPE_QUEEN; piece_type++)
+                    {
+                        PIECE_desc_t piece_desc = PIECE_desc_lut[piece_type];
+                        if (!piece_desc.can_promote_to)
+                        {
+                            continue;
+                        }
+                        GAME_move_t move = {.from = a_from, .to=SQ_FROM_FILE_RANK(file, rank), .promote=piece_type};
+                        move_res = GAME_make_move(p_a_board, move);
+                        if (move_res == GAME_MOVE_RESULT_SUCCESS)
+                        {
+                            p_moves[count] = GAME_undo_move(p_a_board);
+                            count++;
+                        }
+                    }
+                    
+                }
+            }
+        }
+    }
+    return p_moves;
 }
 
 
@@ -621,7 +733,6 @@ void CLI_print_board(const GAME_board_t * p_a_board)
 /** Test function with more convenient notations */
 void _GAME_test_play(GAME_board_t* p_board, int ff, int fr, int tf, int tr)
 {
-    printf("\n\n=================\n\nplayed e4?\n");
     printf("Playing %d-%d to %d-%d\n", ff, fr, tf, tr);
     GAME_move_t m = {.from=SQ_FROM_FILE_RANK(ff-1,fr-1),.to=SQ_FROM_FILE_RANK(tf-1,tr-1),.promote=PIECE_TYPE_QUEEN };
     printf("square: from %x, to %x, promote %d\n", m.from, m.to, m.promote);
@@ -630,6 +741,26 @@ void _GAME_test_play(GAME_board_t* p_board, int ff, int fr, int tf, int tr)
     GAME_move_full_t lm = p_board->history[p_board->turn-1].move;
     printf("special_bm: %x castle_bm_w: %x castle_bm_b: %x ep: %x turn:%d \n", lm.special_bm, p_board->castle_bm[WHITE], p_board->castle_bm[BLACK], p_board->ep, p_board->turn);
     printf("current player %d\n", GAME_current_player(p_board));
+}
+
+void _GAME_test_print_legal_moves(GAME_board_t* p_board, int f, int r)
+{
+    square sq = SQ_FROM_FILE_RANK(f-1,r-1);
+    GAME_move_full_t* moves = GAME_gen_moves_from_sq(p_board, sq);
+    if (moves == NULL)
+    {
+        printf("Given square %x doesn't contain a piece of the correct color.\n", sq);
+        return;
+    }
+    
+    int i=0;
+    while(moves[i].valid)
+    {
+        printf("%c%d, ", SQ_TO_FILE(moves[i].move.to) + 'a', SQ_TO_RANK(moves[i].move.to) + 1);
+        i++;
+    }
+    printf(" - %d legal moves from %x\n\n", i, sq);
+    free(moves);
 }
 
 int main()
@@ -694,4 +825,25 @@ int main()
     _GAME_test_play(p_board, 7,7,7,6);
     _GAME_test_play(p_board, 6,8,7,8);
     */
+
+    _GAME_test_print_legal_moves(p_board,4,3);
+    _GAME_test_print_legal_moves(p_board,5,4);
+    _GAME_test_print_legal_moves(p_board,5,1);
+    _GAME_test_print_legal_moves(p_board,4,1);
+    _GAME_test_print_legal_moves(p_board,3,1);
+    
+    _GAME_test_play(p_board,3,1,4,2);
+    _GAME_test_play(p_board,2,4,3,3);
+    _GAME_test_print_legal_moves(p_board,4,2);
+    _GAME_test_play(p_board,4,1,5,2);
+    _GAME_test_play(p_board,7,8,6,6);
+    _GAME_test_play(p_board,8,2,8,3); 
+    _GAME_test_play(p_board,3,3,4,2);
+    _GAME_test_print_legal_moves(p_board,5,1);
+    _GAME_test_play(p_board,5,2,4,2);
+    _GAME_test_print_legal_moves(p_board,5,8);
+    _GAME_test_play(p_board,5,8,7,8);
+    _GAME_test_print_legal_moves(p_board,5,1);
+    
+    GAME_free_board(p_board);
 }

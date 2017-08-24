@@ -184,11 +184,28 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t *p_a_board, GAME_move_t a_move);
 GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board);
 
 /**
+ * Update the result of the game and return the new result.
+ * We avoid calling this function every make_move as it is expensive
+ * and since most moves are undone anyway is unnecessary.
+ * 
+ * Therefore, this should be called by the object managing the game
+ * as part of it's main loop, probably after every move.
+ *
+ * @param P_a_board pointer to board
+ * 
+ * @return GAME_RESULT_E result of the game as defined in GAME_RESULT_E
+ */
+GAME_RESULT_E GAME_update_result(GAME_board_t * p_a_board);
+
+/**
  * Return an array of size GAME_MAX_POSSIBLE_MOVES of possible 
- * movees for piece at a_from square. With sentinel NULL values 
- * at the end of output. 
+ * moves for piece at a_from square. Allocates memory that must be
+ * freed!
+ *
+ * End of output will be the first element for which move_full.valid
+ * is FALSE.
  *  
- * Return  NULL if there is no piece of the current player's 
+ * Return  NULL if there is no piece of the current player to play's
  * color on the square. 
  * 
  * @param p_a_board pointer to board
@@ -196,7 +213,7 @@ GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board);
  * 
  * @return GAME_move_full_t* Array of possible moves or NULL
  */
-GAME_move_full_t * GAME_get_all_moves(const GAME_board_t * p_a_board, square a_from);
+GAME_move_full_t * GAME_gen_moves_from_sq(GAME_board_t * p_a_board, square a_from);
 
 /** 
  * Return the color of the current player to play. 
