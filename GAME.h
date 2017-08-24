@@ -87,6 +87,7 @@ typedef struct GAME_move_s
  */
 typedef struct GAME_move_full_s
 {
+    BOOL valid;               // is move a valid piece move (not necesserily legal)
     GAME_move_t move;         // move that was played
     PIECE_TYPE_E capture;     // piece that was captured
     int special_bm;           // Bitmask indicating special behaviour (see GAME_SPECIAL_BM_E)
@@ -133,10 +134,8 @@ GAME_board_t * GAME_new_board();
  * INCLUDING returned possible_move arrays). 
  *  
  * @param p_a_board pointer to board 
- *  
- * @return TRUE on success, FALSE on fail 
  */
-BOOL GAME_free_board(GAME_board_t * p_a_board);
+void GAME_free_board(GAME_board_t * p_a_board);
 
 
 /**
@@ -206,7 +205,7 @@ GAME_move_full_t * GAME_get_all_moves(const GAME_board_t * p_a_board, square a_f
  *  
  * @return COLOR the color of the player to play 
  */
-inline COLOR GAME_current_player(const GAME_board_t * p_a_board);
+COLOR GAME_current_player(const GAME_board_t * p_a_board);
 
 /** 
  * Return the letter of the piece at 
@@ -216,6 +215,6 @@ inline COLOR GAME_current_player(const GAME_board_t * p_a_board);
  *  
  * @return char the letter of the piece on the square
  */
-inline char GAME_piece_letter_at(const GAME_board_t * p_a_board, square a_sq);
+char GAME_piece_letter_at(const GAME_board_t * p_a_board, square a_sq);
 
 #endif /*GAME_IMP*/

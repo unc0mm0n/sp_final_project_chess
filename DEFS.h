@@ -34,14 +34,14 @@
 
 typedef uint8_t square; // bits 0-3 bits indicate the file and bits 4-6 indicate the rank. Bits 3 and 7 are for control.
 
-#define SQ_FROM_FILE_RANK(f, r) ((square) (((r) << 4) + (f)))  // get a square using file and rank.
+#define SQ_FROM_FILE_RANK(f, r) ((square) (((7 - (r)) << 4) + (f)))  // get a square using file and rank.
 #define SQ_TO_FILE(sq) ((int) ((sq) & 7))                    // get a file using square
-#define SQ_TO_RANK(sq) ((int) (((sq) >> 4) & 7))             // get a rank using square
+#define SQ_TO_RANK(sq) (7 - (int) (((sq) >> 4) & 7))             // get a rank using square
 #define SQ_IS_LEGAL(sq)  (!((sq) & 0x88))                      // check if square is a legal square (using control bits, assuming type square)
 
-#define SQ_UP(sq)           ((sq) + (1<<4))         // increase the rank by 1, giving the square above.
-#define SQ_DOWN(sq)         ((sq) - (1<<4))         // reduce the rank by 1, giving the square below.
-#define SQ_RIGHT(sq)        ((sq) + 1)              // increas the file by 1, giving the square to the right.
+#define SQ_UP(sq)           ((sq) - (1<<4))         // reduce the rank by 1, giving the square above.
+#define SQ_DOWN(sq)         ((sq) + (1<<4))         // increase the rank by 1, giving the square below.
+#define SQ_RIGHT(sq)        ((sq) + 1)              // increase the file by 1, giving the square to the right.
 #define SQ_LEFT(sq)         ((sq) - 1)              // reduce the rank by 1, giving the square to the left.
 #define SQ_UP_LEFT(sq)      SQ_UP(SQ_LEFT(sq))      // move up then left
 #define SQ_UP_RIGHT(sq)     SQ_UP(SQ_RIGHT(sq))     // move up then right
@@ -64,7 +64,8 @@ typedef uint8_t square; // bits 0-3 bits indicate the file and bits 4-6 indicate
 #define IS_WHITE_PAWN_RANK(sq) SQ_IS_RANK(sq, WHITE_PAWN_RANK)      // Test that is the rank                                             
 #define BLACK_PAWN_RANK        (NUM_RANKS - 2)                      // Rank in which black pawns start
 #define IS_BLACK_PAWN_RANK(sq) SQ_IS_RANK(sq, BLACK_PAWN_RANK)      // Test that is the rank
-                                                                    
+#define IS_PAWN_RANK(c, sq)    ((c) == WHITE ? IS_WHITE_PAWN_RANK(sq) : IS_BLACK_PAWN_RANK(sq))
+
 /* Important squares (piece rows, mostly for castling tests) */                                          
 #define A1 SQ_FROM_FILE_RANK(0,0)
 #define B1 SQ_FROM_FILE_RANK(1,0)
