@@ -124,13 +124,13 @@ BOOL _GAME_no_moves(GAME_board_t * p_a_board)
                 if (p_moves[0].valid)
                 {
                     free(p_moves);
-                    return TRUE;
+                    return FALSE;
                 }
                 free(p_moves);
             }
         }
     }
-    return FALSE;
+    return TRUE;
 
 }
 
@@ -793,7 +793,7 @@ int main()
     printf("color: %d other_color: %d not_color: %d other_not_color: %d\n",
             WHITE, OTHER_COLOR(WHITE), NO_COLOR, OTHER_COLOR(NO_COLOR));
 
-    /* check and pinned piece test */
+    /* check and pinned piece test *
      
     _GAME_test_play(p_board,5,2,5,4); //e4
     _GAME_test_play(p_board,5,7,5,5); //e5
@@ -803,7 +803,28 @@ int main()
     _GAME_test_play(p_board,2,1,3,3); //Nc3
     _GAME_test_play(p_board,4,7,4,5); //d5
     _GAME_test_play(p_board,3,3,4,5); //Nxd5 (illegal)
-    /* Enpassant casstle basic check test
+
+    _GAME_test_print_legal_moves(p_board,4,3);
+    _GAME_test_print_legal_moves(p_board,5,4);
+    _GAME_test_print_legal_moves(p_board,5,1);
+    _GAME_test_print_legal_moves(p_board,4,1);
+    _GAME_test_print_legal_moves(p_board,3,1);
+    
+    _GAME_test_play(p_board,3,1,4,2);
+    _GAME_test_play(p_board,2,4,3,3);
+    _GAME_test_print_legal_moves(p_board,4,2);
+    _GAME_test_play(p_board,4,1,5,2);
+    _GAME_test_play(p_board,7,8,6,6);
+    _GAME_test_play(p_board,8,2,8,3); 
+    _GAME_test_play(p_board,3,3,4,2);
+    _GAME_test_print_legal_moves(p_board,5,1);
+    _GAME_test_play(p_board,5,2,4,2);
+    _GAME_test_print_legal_moves(p_board,5,8);
+    _GAME_test_play(p_board,5,8,7,8);
+    _GAME_test_print_legal_moves(p_board,5,1);
+    */
+
+    /* Enpassant casstle basic check test *
     _GAME_test_play(p_board, 5,2,5,4);
     _GAME_test_play(p_board, 5,2,5,4);
     _GAME_test_play(p_board, 5,7,5,5);
@@ -826,24 +847,17 @@ int main()
     _GAME_test_play(p_board, 6,8,7,8);
     */
 
-    _GAME_test_print_legal_moves(p_board,4,3);
-    _GAME_test_print_legal_moves(p_board,5,4);
-    _GAME_test_print_legal_moves(p_board,5,1);
-    _GAME_test_print_legal_moves(p_board,4,1);
-    _GAME_test_print_legal_moves(p_board,3,1);
-    
-    _GAME_test_play(p_board,3,1,4,2);
-    _GAME_test_play(p_board,2,4,3,3);
-    _GAME_test_print_legal_moves(p_board,4,2);
-    _GAME_test_play(p_board,4,1,5,2);
-    _GAME_test_play(p_board,7,8,6,6);
-    _GAME_test_play(p_board,8,2,8,3); 
-    _GAME_test_play(p_board,3,3,4,2);
-    _GAME_test_print_legal_moves(p_board,5,1);
-    _GAME_test_play(p_board,5,2,4,2);
-    _GAME_test_print_legal_moves(p_board,5,8);
-    _GAME_test_play(p_board,5,8,7,8);
-    _GAME_test_print_legal_moves(p_board,5,1);
+    /* mate and status update test */
+    _GAME_test_play(p_board, 5,2,5,4);
+    _GAME_test_play(p_board, 5,7,5,5);
+    _GAME_test_play(p_board, 4,1,8,5);
+    _GAME_test_play(p_board, 2,8,3,6);
+    _GAME_test_play(p_board, 6,1,3,4);
+    _GAME_test_play(p_board, 7,8,6,6);
+    printf("game current result: %d\n", GAME_update_result(p_board));
+    assert(GAME_update_result(p_board) == GAME_RESULT_PLAYING);
+    _GAME_test_play(p_board, 8,5,6,7);
+    assert(GAME_update_result(p_board) == GAME_RESULT_WHITE_WINS);
     
     GAME_free_board(p_board);
 }
