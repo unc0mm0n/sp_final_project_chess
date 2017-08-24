@@ -39,12 +39,13 @@ typedef enum GAME_CASTLE_BM_S
  */
 typedef enum GAME_SPECIAL_BM_S
 {
-    GAME_SPECIAL_CAPTURE        = 1,
-    GAME_SPECIAL_EP_CAPTURE     = 2,
-    GAME_SPECIAL_PROMOTE        = 4,
-    GAME_SPECIAL_CASTLE         = 8,
-    GAME_SPECIAL_CHECK          = 16,
-    GAME_SPECIAL_UNDER_ATTACK   = 32
+    GAME_SPECIAL_CAPTURE          = 1,
+    GAME_SPECIAL_EP_CAPTURE       = 2,
+    GAME_SPECIAL_PROMOTE          = 4,
+    GAME_SPECIAL_CASTLE           = 8,
+    GAME_SPECIAL_CHECK            = 16,
+    GAME_SPECIAL_UNDER_ATTACK     = 32,
+    GAME_SPECIAL_PAWN_DOUBLE_MOVE = 64
 } GAME_SPECIAL_BM_E;
 
 /**
@@ -89,9 +90,19 @@ typedef struct GAME_move_full_s
     GAME_move_t move;         // move that was played
     PIECE_TYPE_E capture;     // piece that was captured
     int special_bm;           // Bitmask indicating special behaviour (see GAME_SPECIAL_BM_E)
-    int castle_bm[2];         // Bitmask indicating available castling (see GAME_CASTLE_BM_E)
 
 } GAME_move_full_t;
+
+/**
+ * Struct to remember important history parameters (which move 
+ * was played, and what were the ep/castle status). 
+ */
+typedef struct GAME_history_s
+{
+    GAME_move_full_t move;                 // The move that was played with all of it's parameters
+    int              castle_bm[2];         // Bitmask indicating available castling (see GAME_CASTLE_BM_E)
+    square           ep;                   // whether ep was legal
+} GAME_history_t;
 
 /**
  * Game board object to hold a complete game of chess.
@@ -106,7 +117,7 @@ typedef struct GAME_board_s
     int castle_bm[NUM_PLAYERS];                      // Bitmask indicating available castling per player (see GAME_CASTLE_BM_E)
     int turn;                                        // Current turn of the game, starts at 1.
     GAME_RESULT_E result;                            // result of the game.
-    GAME_move_full_t history[GAME_HISTORY_SIZE];     // Game history to undo moves
+    GAME_history_t history[GAME_HISTORY_SIZE];     // Game history to undo moves
 } GAME_board_t;
 
 /**
@@ -148,7 +159,7 @@ BOOL GAME_is_attacking(const GAME_board_t* p_a_board, COLOR color, square sq);
  * 
  * @return BOOL true if player is in check
  */
-BOOL GAME_player_is_in_check(const GAME_board_t* p_a_board, COLOR color);
+BOOL GAME_is_checked(const GAME_board_t* p_a_board, COLOR color);
 
 /**
  * Make a single move in the game if legal.

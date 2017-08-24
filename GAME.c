@@ -85,6 +85,10 @@ BOOL _GAME_is_allowed_piece_movement(GAME_board_t* p_a_board, GAME_move_t a_move
             {
                 return TRUE;        // We have found a move sequence leading to the destination.
             }
+            if (p_a_board->colors[tmp] != NO_COLOR)
+            {
+                break;              // path is blocked by something
+            }
             if (!piece_desc.slides) // Can only move once in this offset, switch to next offset.
             {
                 break;
@@ -92,6 +96,49 @@ BOOL _GAME_is_allowed_piece_movement(GAME_board_t* p_a_board, GAME_move_t a_move
         }
 
     }
+}
+
+/**
+ * Save move and all current game parameters to history, so that 
+ * we can undo it if necessary. 
+ *  
+ * The history is saved on the game's current turn 
+ */
+void _GAME_save_history(GAME_board_t *p_a_board, GAME_move_full_t move)
+{
+    int turn = p_a_board->turn;
+    p_a_board->history[turn].move = move; 
+    memcpy(p_a_board->history[turn].castle_bm, p_a_board->castle_bm, sizeof(p_a_board->history[turn].castle_bm)); 
+    p_a_board->history[turn].ep = p_a_board->castle_bm; 
+}
+
+/**
+ * Update castle bitmask according to if the king or rook moved. 
+ * Color is not important as if an opponent piece moved there or
+ * from there, our original piece wasn't there. 
+ */
+
+void _GAME_update_castle_bm(int * castle_bm, GAME_move_t move)
+{
+    if (a_move.from == A1 || a_move.to == A1 || a_move.from == E1) // we do not need to check move to E1, as king can't be captured
+    {
+        full_move.castle_bm[WHITE] = DISABLE_CASTLE(full_move.castle_bm[WHITE], GAME_CASTLE_QUEENSIDE);
+    }
+
+    if (a_move.from == H1 || a_move.to == H1 || a_move.from == E1)
+    {
+        full_move.castle_bm[WHITE] = DISABLE_CASTLE(full_move.castle_bm[WHITE], GAME_CASTLE_KINGSIDE);
+    }
+    if (a_move.from == A8 || a_move.to == A8 || a_move.from == E8)
+    {
+        full_move.castle_bm[BLACK] = DISABLE_CASTLE(full_move.castle_bm[BLACK], GAME_CASTLE_QUEENSIDE);
+    }
+
+    if (a_move.from == H8 || a_move.to == H8 || a_move.from == E8)
+    {
+        full_move.castle_bm[BLACK] = DISABLE_CASTLE(full_move.castle_bm[BLACK], GAME_CASTLE_KINGSIDE);
+    }
+
 }
 
 /**
@@ -125,19 +172,16 @@ GAME_move_full_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_move_t
         BOOL is_move;
         BOOL is_diag_move;
         BOOL is_ep = (a_move.to == p_a_board->ep); // Is en passant capture
-        int  new_ep; // Calculate new ep value. Different if black or white moved.
         switch (player)
         {
         case WHITE:
             is_move = (a_move.to == SQ_UP(a_move.from))                                           // move up
             is_double_move = (IS_WHITE_PAWN_RANK(sq) && a_move.to == SQ_UP(SQ_UP(a_move.from)));  // or move twice up from initial square
-            new_ep = SQ_UP(a_move.from);
             is_diag_move = SQ_IS_DIAG_UP(a_move.from, a_move.to);                                 // or move diagonally if capture or ep
             break;
         case BLACK:
             is_move = (a_move.to == SQ_DOWN(a_move.from))                                            // move down
             is_double_move = (IS_BLACK_PAWN_RANK(sq) && a_move.to == SQ_DOWN(SQ_DOWN(a_move.from))); // or move twice down from initial square
-            new_ep = SQ_DOWN(a_move.from);
             is_diag_move = SQ_IS_DIAG_DOWN(a_move.from, a_move.to);                                  // or move diagonally if capture or ep
             break;
         case default:
@@ -160,24 +204,23 @@ GAME_move_full_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_move_t
 
         if (is_double_move) // to update ep is possible.
         {
-            full_move.ep = new_ep;
+            full_move.special_bm |= GAME_SPECIAL_PAWN_DOUBLE_MOVE;
         }
     }
     else if ((p_a_board->pieces[a_move.from] == PIECE_TYPE_KING) && (a_move.to == SQ_LEFT(SQ_LEFT(a_move.from))))   // queenside castle
     {
-        PRUNE(p_a_board->castle_bm[player] & GAME_CASTLE_QUEENSIDE)         // make sure castle is legal
+        PRUNE(p_a_board->castle_bm[player] & GAME_CASTLE_QUEENSIDE)         // make sure castle is allowed
         PRUNE(p_a_board->pieces[SQ_LEFT(a_move.to)] == PIECE_TYPE_EMTPY)    // make sure B1/B8 is empty
         PRUNE(p_a_board->pieces[a_move.to] == PIECE_TYPE_EMTPY)             // make sure C1/C8 is empty (castles can't capture)
         PRUNE(p_a_board->pieces[SQ_RIGHT(a_move.to)] == PIECE_TYPE_EMTPY)   // make sure D1/D8 is empty
         assert(a_move.from == KING_START(player))                           // king in starting square. Assert, as should be in bm
-        // possibly add assert testing rook is there, should be handled by BM
 
         full_move.castle_bm[player] = GAME_CASTLE_NONE;
         full_move.special_bm |= GAME_SPECIAL_CASTLE;
     }
     else if ((p_a_board->pieces[a_move.from] == PIECE_TYPE_KING) && (a_move.to == SQ_RIGHT(SQ_RIGHT(a_move.from)))) // kingside castle
     {
-        PRUNE(p_a_board->castle_bm[player] & GAME_CASTLE_KINGSIDE)          // make sure castle is legal  
+        PRUNE(p_a_board->castle_bm[player] & GAME_CASTLE_KINGSIDE)          // make sure castle is allowed  
         assert(a_move.from == KING_START(player))                           // king in starting square. Assert, as should be in bm
         PRUNE(p_a_board->pieces[SQ_LEFT(a_move.to)] == PIECE_TYPE_EMTPY)    // make sure F1/F8 is empty
         PRUNE(p_a_board->pieces[a_move.to] == PIECE_TYPE_EMTPY)             // make sure G1/G8 is empty (castles can't capture)
@@ -198,34 +241,6 @@ GAME_move_full_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_move_t
         full_move.capture = p_a_board->pieces[a_move.to]; 
     }
 
-    switch (player) // finally, update castle bm
-    {
-    case WHITE:
-        if (a_move.from == A1 || a_move.from == E1)
-        {
-            DISABLE_CASTLE(full_move.castle_bm[player], GAME_CASTLE_QUEENSIDE)
-        }
-
-        if (a_move.from == H1 || a_move.from == E1)
-        {
-            DISABLE_CASTLE(full_move.castle_bm[player], GAME_CASTLE_KINGSIDE)
-        }
-        break;
-    case BLACK:
-        if (a_move.from == A8 || a_move.from == E8)
-        {
-            DISABLE_CASTLE(full_move.castle_bm[player], GAME_CASTLE_QUEENSIDE)
-        }
-
-        if (a_move.from == H8 || a_move.from == E8)
-        {
-            DISABLE_CASTLE(full_move.castle_bm[player], GAME_CASTLE_KINGSIDE)
-        }
-        break;
-    default:
-        assert(0) // invalid color
-    }
-
     return full_move;
 }
 
@@ -242,7 +257,7 @@ GAME_board_t * GAME_new_board()
     _GAME_init_pieces(p_board);
     _GAME_init_color(p_board);
     
-    // Initialize parameters (except for history which will be trash at this point)
+    // Initialize parameters
     p_board->turn         = 1;
     p_board->result       = GAME_RESULT_PLAYING;
     p_board->ep           = GAME_NO_EP;
@@ -264,21 +279,66 @@ void GAME_free_board(GAME_board_t * p_a_board)
 
 BOOL GAME_is_attacking(const GAME_board_t* p_a_board, COLOR color, square sq)
 {
-    // iterate over the squares
-    for (int rank = 0; rank < NUM_RANKS; rank++)
+    /* We test if a square is attacked by testing if replacing it by some piece could take an opponent piece of the same type.
+       This is similar to yet different from the reachibility test done above. */
+
+    if (!IS_COLOR(color))
     {
-        for (int file = 0; file < NUM_FILES; file++)
+        return FALSE;
+    }
+
+    // Check if pawn attacks
+    int sq_l, sq_r;
+    if (color == WHITE)
+    {
+        int sq_l = SQ_DOWN_LEFT(sq), sq_r = SQ_DOWN_RIGHT(sq);
+    }
+    else
+    {
+        int sq_l = SQ_UP_LEFT(sq), sq_r = SQ_UP_RIGHT(sq);
+    }
+
+    if (p_a_board->pieces[sq_l] == PIECE_TYPE_PAWN && p_a_board->colors[sq_l] == color) 
+    {
+        return TRUE;
+    }
+    if (p_a_board->pieces[sq_r] == PIECE_TYPE_PAWN && p_a_board->colors[sq_r] == color) 
+    {
+        return TRUE;
+    }
+
+    PIECE_desc_t desc;
+    // check other pieces
+    for (int i = PIECE_TYPE_KNIGHT; i < PIECE_TYPE_MAX; i++)
+    {
+        desc = PIECE_desc_lut[i];
+        square tmp = sq;
+
+        for (int j = 0; j < PIECE_MAX_OFFSET; j++)
         {
-            square from = SQUARE_FROM_FILE_RANK(file, rank)
-            // searching for all opponent pieces.
-            if (GAME_current_player(board) == color))
+            if (piece_desc.offsets[j] == PIECE_OFFSET_SENTINEL)
             {
-                assert(p_a_board->pieces[from] != PIECE_TYPE_EMPTY) // Having a color should suffice for a piece to be there.
-                GAME_move_t move = { .from = from, .to = sq, .promote = PIECE_TYPE_QUEEN }; // Just to make sure we don't fall on invalid promotes
-                if (_GAME_analayze_move(p_a_board, move) != NULL)  // if the move could theorethically be made (even leading to an illegal position)
+                break; // We have checked all piece offsets and haven't found a match.
+            }
+            offset = desc.offsets[i]; // offset to move the piece at each step.
+
+            tmp += offset;
+
+            while (SQ_IS_LEGAL(tmp))) 
+            {
+                if (p_a_board->pieces[tmp] == i && p_a_board->colors[tmp] == color)
                 {
-                    return TRUE; // return TRUE for check.
+                    return TRUE;        // We have found a piece which threatens the square
                 }
+                if (p_a_board->colors[tmp] != NO_COLOR)
+                {
+                    break;        // Path is blocked by a piece which can't capture.
+                }
+                if (!piece_desc.slides) // Can only move once in this offset, switch to next offset.
+                {
+                    break;
+                }
+                tmp += offset;
             }
         }
     }
@@ -286,7 +346,7 @@ BOOL GAME_is_attacking(const GAME_board_t* p_a_board, COLOR color, square sq)
     return FALSE;
 }
 
-BOOL GAME_player_is_in_check(const GAME_board_t* p_a_board, COLOR color)
+BOOL GAME_is_checked(const GAME_board_t* p_a_board, COLOR color)
 {
     // iterate over the squares
     for (int rank = 0; rank < NUM_RANKS; rank++)
@@ -318,7 +378,7 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
         return GAME_MOVE_RESULT_NO_PIECE;
     }
 
-    GAME_full_move_t full_move = _GAME_analayze_move(p_a_board, a_move); 
+    GAME_move_full_t full_move = _GAME_analayze_move(p_a_board, a_move); 
     if (full_move == NULL)
     {
         return GAME_MOVE_RESULT_ILLEGAL_MOVE;
@@ -331,13 +391,11 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
     // final castling checks (no check currently or in the way)
     if (full_move.special & GAME_SPECIAL_CASTLE) 
     {
-
-        if (GAME_player_is_in_check(p_a_board, player)
+        if (GAME_is_checked(p_a_board, player)
         {
             return GAME_MOVE_RESULT_ILLEGAL_MOVE; // can't castle while in check.
         }
         square rook_from, rook_to;  // how to move the rook following the castle.
-
         // check the middle squares passed by the king is safe (the original and final squares are tested anyway)
         switch (full.move.to)
         {
@@ -366,7 +424,7 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
             }
             assert(p_a_board->pieces[A8] == PIECE_TYPE_ROOK); // should have been handled long ago by bitmask
             rook_from = A8;
-            rook_to = B8;
+            rook_to = D8;
             break;
         case G8     // black kingside castle
             if (GAME_is_attacking(p_a_board, opponent, F8)) 
@@ -380,12 +438,146 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
         default:
             assert(0)   // castle flag was set but move wasn't castle.
         }
-
+        // update rook position to after castle
         p_a_board->pieces[rook_from] = PIECE_TYPE_EMPTY;
         p_a_board->color[rook_from]  = NO_COLOR;
+        p_a_board->pieces[rook_to]   = PIECE_TYPE_ROOK;
+        p_a_board->color[rook_to]    = player;
     }
 
-    memcpy(p_a_board->history[p_a_board->turn], full_move, sizeof(p_a_board->history[p_a_board->turn])); // Save move about to be made to history.
+    // save in history, in case of undo.
+    _GAME_save_history(p_a_board, full_move);
+    // update game parameters
+    _GAME_update_castle_bm(p_a_board->castle_bm, full_move.move);
+    if (full_move.special_bm & GAME_SPECIAL_PAWN_DOUBLE_MOVE) // update ep is possible
+    {
+        if (player == WHITE)
+        {
+            p_a_board->ep = SQ_DOWN(full_move.move.to);
+        }
+        else
+        {
+            p_a_board->ep = SQ_UP(full_move.move.to);
+        }
+    }
+    else // or not possible
+    {
+        p_a_board->ep = GAME_NO_EP;
+    }
+    p_a_board->turn++;
+    
+    // move piece
+    p_a_board->colors[full_move.move.to] = player;
+    p_a_board->colors[full_move.move.from] = NO_COLOR;
+
+    if (full_move.special_bm & GAME_SPECIAL_PROMOTE) // if promotion switch to promoted piece
+    {
+        p_a_board->pieces[full_move.move.to] = full_move.move.promote; 
+    }
+    else
+    {
+        p_a_board->pieces[full_move.move.to] = p_a_board->pieces[full_move.move.from]; 
+    }
+    p_a_board->pieces[full_move.move.from] = PIECE_TYPE_EMPTY;
+
+    if (full_move.special_bm & GAME_SPECIAL_EP_CAPTURE)  // if we took enpassant, remove the pawn
+    {
+        if (player == WHITE)
+        {
+            p_a_board->pieces[SQ_DOWN(full_move.move.to)] == PIECE_TYPE_EMPTY;
+        }
+        else
+        {
+            p_a_board->pieces[SQ_UP(full_move.move.to)] == PIECE_TYPE_EMPTY;
+        }
+    }
+
+    // finally we can check if the move leads to a legal position
+    if (GAME_is_checked(player))
+    {
+        GAME_undo_move(p_a_board); // All this was for naught.
+        return GAME_MOVE_RESULT_ILLEGAL_MOVE;
+    }
+
+    // and update final parameters in the move history.
+    p_a_board->history[p_a_board->turn].full_move.special_bm |= GAME_SPECIAL_CHECK * GAME_is_checked(p_a_board, OTHER_COLOR(player)); 
+    p_a_board->history[p_a_board->turn].full_move.special_bm |= GAME_SPECIAL_UNDER_ATTACK * GAME_is_attacking(p_a_board, OTHER_COLOR(player), a_move.to);
+
+    return GAME_MOVE_RESULT_SUCCESS;
+}
+
+GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board)
+{
+    /* this is really similar to a normal move, but in reverse and without legality checking. */
+    p_a_board->turn--;  // update turn
+    GAME_history_t hist = p_a_board->history[p_a_board->turn]; // fetch history
+
+    // update parameters
+    memcpy(p_a_board->castle_bm, hist.castle_bm, sizeof(p_a_board->castle_bm));
+    p_a_board->ep = hist.ep;
+
+    /* reverse move */
+    COLOR moving_player = GAME_get_current_player(p_a_board);
+    GAME_move_full_t last_move = hist.move;
+
+    // reverse ep
+    if (last_move.special_bm & GAME_SPECIAL_EP_CAPTURE) 
+    {
+        p_a_board->pieces[hist.ep] == PIECE_TYPE_PAWN;
+        p_a_board->colors[hist.ep] == OTHER_COLOR(moving_player);
+    }
+
+     // move piece back
+    p_a_board->colors[full_move.move.from] = player;
+    p_a_board->colors[full_move.move.to] = NO_COLOR;
+
+    if (full_move.special_bm & GAME_SPECIAL_PROMOTE) // if promotion switch back to pawn
+    {
+        p_a_board->pieces[full_move.move.from] = PIECE_TYPE_PAWN; 
+    }
+    else // otherwise keep original piece
+    {
+        p_a_board->pieces[full_move.move.from] = p_a_board->pieces[full_move.move.to]; 
+    }
+    p_a_board->pieces[full_move.move.to] = PIECE_TYPE_EMPTY;
+
+    // reverse castling
+    if (last_move.special_bm & GAME_SPECIAL_CASTLE)
+    {
+        square rook_from, rook_to;  // how to move the rook to before the castle
+        switch (full.move.to)
+        {
+        case C1:    // white queenside castle
+            assert(p_a_board->pieces[D1] == PIECE_TYPE_ROOK); // if just castled, should be rook there
+            rook_from = D1;
+            rook_to = A1;
+            break;
+        case G1     // white kingside castle
+            assert(p_a_board->pieces[F1] == PIECE_TYPE_ROOK); // if just castled, should be rook there
+            rook_from = F1;
+            rook_to = H1;
+            break;
+        case C8     // black queenside castle
+            assert(p_a_board->pieces[D8] == PIECE_TYPE_ROOK); // if just castled, should be rook there
+            rook_from = D8;
+            rook_to = A8;
+            break;
+        case G8     // black kingside castle
+            assert(p_a_board->pieces[F8] == PIECE_TYPE_ROOK); // if just castled, should be rook there
+            rook_from = F8;
+            rook_to = H8;
+            break;
+        default:
+            assert(0)   // castle flag was set but move wasn't castle.
+        }
+        // update rook position to after castle
+        p_a_board->pieces[rook_from] = PIECE_TYPE_EMPTY;
+        p_a_board->color[rook_from]  = NO_COLOR;
+        p_a_board->pieces[rook_to]   = PIECE_TYPE_ROOK;
+        p_a_board->color[rook_to]    = moving_player;
+    }
+
+    return last_move;
 }
 
 
@@ -398,7 +590,7 @@ int main()
 {
     GAME_board_t * p_board = GAME_new_board();
     printf("enum elem size: %lu\n", sizeof(PIECE_TYPE_PAWN));
-    printf("history elem size: %lu\n", sizeof(GAME_move_full_t));
+    printf("history elem size: %lu\n", sizeof(GAME_history_t));
     printf("size: %lu\n", sizeof(GAME_board_t));
 
     for (int i=0; i < NUM_RANKS; i++)
