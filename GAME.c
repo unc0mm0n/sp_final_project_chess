@@ -540,7 +540,6 @@ GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board)
 
      // move piece back
     p_a_board->colors[last_move.move.from] = moving_player;
-    p_a_board->colors[last_move.move.to] = NO_COLOR;
 
     if (last_move.special_bm & GAME_SPECIAL_PROMOTE) // if promotion switch back to pawn
     {
@@ -550,7 +549,17 @@ GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board)
     {
         p_a_board->pieces[last_move.move.from] = p_a_board->pieces[last_move.move.to]; 
     }
-    p_a_board->pieces[last_move.move.to] = PIECE_TYPE_EMPTY;
+    
+    if (last_move.special_bm & GAME_SPECIAL_CAPTURE) // restore captured piece 
+    {
+        p_a_board->colors[last_move.move.to] = OTHER_COLOR(moving_player); 
+        p_a_board->pieces[last_move.move.to] = last_move.capture; 
+    }
+    else
+    {
+        p_a_board->colors[last_move.move.to] = NO_COLOR;
+        p_a_board->pieces[last_move.move.to] = PIECE_TYPE_EMPTY;
+    }
 
     // reverse castling
     if (last_move.special_bm & GAME_SPECIAL_CASTLE)
@@ -582,9 +591,9 @@ GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board)
             assert(0);   // castle flag was set but move wasn't castle.
         }
         // update rook position to after castle
-        p_a_board->pieces[rook_from] = PIECE_TYPE_EMPTY;
+        p_a_board->pieces[rook_from]  = PIECE_TYPE_EMPTY;
         p_a_board->colors[rook_from]  = NO_COLOR;
-        p_a_board->pieces[rook_to]   = PIECE_TYPE_ROOK;
+        p_a_board->pieces[rook_to]    = PIECE_TYPE_ROOK;
         p_a_board->colors[rook_to]    = moving_player;
     }
 
