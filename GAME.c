@@ -631,35 +631,29 @@ GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board)
     return last_move;
 }
 
-GAME_RESULT_E GAME_update_result(GAME_board_t* p_a_board)
+GAME_RESULT_E GAME_get_result(GAME_board_t* p_a_board)
 {
-
-    GAME_RESULT_E new_result;
 
     if (_GAME_no_moves(p_a_board)) // if a player has no move
     {
         if (GAME_is_checked(p_a_board, WHITE)) // either white is mated
         {
             assert(GAME_current_player(p_a_board) == WHITE); // in which case it should be his turn
-            new_result = GAME_RESULT_BLACK_WINS;
+            return GAME_RESULT_BLACK_WINS;
         }
         else if (GAME_is_checked(p_a_board, BLACK)) // or black is mated
         {
             assert(GAME_current_player(p_a_board) == BLACK); // in which case it should be his turn
-            new_result = GAME_RESULT_WHITE_WINS;
+            return GAME_RESULT_WHITE_WINS;
         }
         else // or it's a stalemate
         {
-            new_result = GAME_RESULT_DRAW;
+            return  GAME_RESULT_DRAW;
         }
 
-        p_a_board->result = new_result;
-        return new_result;
     }
     else
     {
-        assert(p_a_board->result == GAME_RESULT_PLAYING); // if any player can play the game shouldn't be over
-                                                          // (where we ignore 3-fold repetition and 50 moves draw)
         return GAME_RESULT_PLAYING;
     }
 }
@@ -719,7 +713,7 @@ COLOR GAME_current_player(const GAME_board_t * p_a_board)
 
 char GAME_piece_letter_at(const GAME_board_t * p_a_board, square a_sq)
 {
-    return PIECE_desc_lut[p_a_board->pieces[a_sq]].letters[p_a_board->colors[a_sq] & 1])
+    return PIECE_desc_lut[p_a_board->pieces[a_sq]].letters[p_a_board->colors[a_sq] & 1];
 }
 
 void CLI_print_board(const GAME_board_t * p_a_board)
@@ -728,7 +722,7 @@ void CLI_print_board(const GAME_board_t * p_a_board)
     {
         for (int j=0; j < NUM_RANKS; j++)
         {
-            printf("%c ",; GAME_piece_letter_at(p_a_board, SQ_FROM_FILE_RANK(j,i));
+            printf("%c ", GAME_piece_letter_at(p_a_board, SQ_FROM_FILE_RANK(j,i)));
         }
         printf("\n");
     }
@@ -767,6 +761,7 @@ void _GAME_test_print_legal_moves(GAME_board_t* p_board, int f, int r)
     free(moves);
 }
 
+/*
 int main()
 {
     GAME_board_t * p_board = GAME_new_board();
@@ -797,7 +792,7 @@ int main()
     printf("color: %d other_color: %d not_color: %d other_not_color: %d\n",
             WHITE, OTHER_COLOR(WHITE), NO_COLOR, OTHER_COLOR(NO_COLOR));
 
-    /* check and pinned piece test *
+    / * check and pinned piece test * /
      
     _GAME_test_play(p_board,5,2,5,4); //e4
     _GAME_test_play(p_board,5,7,5,5); //e5
@@ -826,9 +821,9 @@ int main()
     _GAME_test_print_legal_moves(p_board,5,8);
     _GAME_test_play(p_board,5,8,7,8);
     _GAME_test_print_legal_moves(p_board,5,1);
-    */
+    * /
 
-    /* Enpassant casstle basic check test *
+    / * Enpassant casstle basic check test *
     _GAME_test_play(p_board, 5,2,5,4);
     _GAME_test_play(p_board, 5,2,5,4);
     _GAME_test_play(p_board, 5,7,5,5);
@@ -849,19 +844,19 @@ int main()
     _GAME_test_play(p_board, 5,7,6,8);
     _GAME_test_play(p_board, 7,7,7,6);
     _GAME_test_play(p_board, 6,8,7,8);
-    */
+    * /
 
-    /* mate and status update test */
+    / * mate and status update test *
     _GAME_test_play(p_board, 5,2,5,4);
     _GAME_test_play(p_board, 5,7,5,5);
     _GAME_test_play(p_board, 4,1,8,5);
     _GAME_test_play(p_board, 2,8,3,6);
     _GAME_test_play(p_board, 6,1,3,4);
     _GAME_test_play(p_board, 7,8,6,6);
-    printf("game current result: %d\n", GAME_update_result(p_board));
-    assert(GAME_update_result(p_board) == GAME_RESULT_PLAYING);
+    printf("game current result: %d\n", GAME_get_result(p_board));
+    assert(GAME_get_result(p_board) == GAME_RESULT_PLAYING);
     _GAME_test_play(p_board, 8,5,6,7);
-    assert(GAME_update_result(p_board) == GAME_RESULT_WHITE_WINS);
+    assert(GAME_get_result(p_board) == GAME_RESULT_WHITE_WINS);
     
     GAME_free_board(p_board);
-}
+}*/
