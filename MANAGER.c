@@ -45,8 +45,8 @@ void _MANAGER_handle_settings(MANAGER_managed_game_t* p_a_manager)
 void _MANAGER_handle_pre_play(MANAGER_managed_game_t* p_a_manager)
 {
     /*TODO: implement this, for now we just start a two player game*/
-    p_a_manager->play_agents[0] = p_a_manager->settings_agent;
-    p_a_manager->play_agents[1] = p_a_manager->settings_agent;
+    p_a_manager->play_agents[0] = p_a_manager->settings_agent.get_play_agent();
+    p_a_manager->play_agents[1] = p_a_manager->settings_agent.get_play_agent();
     p_a_manager->state          = MANAGER_STATE_PLAY;
 }
 
@@ -60,16 +60,18 @@ void _MANAGER_handle_play(MANAGER_managed_game_t* p_a_manager)
 
     switch (command.type) 
     {
-    case MANAGER_PLAY_COMMAND_TYPE_MOVE:
-        GAME_MOVE_RESULTS_E move_result = GAME_make_move(p_a_manager->p_board, command.data.move);
+    case MANAGER_PLAY_COMMAND_TYPE_MOVE:    
+        response.output.move_result = GAME_make_move(p_a_manager->p_board, command.data.move);
         response.has_output = TRUE;
-        response.output.move_result = move_result;
+    default:
+        assert(0);
+        break;
     }
 
-    p_a_manager->play_agents[current_player].handle_play_command_response(command, response)
+    p_a_manager->play_agents[game_current_player].handle_play_command_response(command, response);
 }
 
-MANAGER_managed_game_t * MANAGER_new_managed_game(MANAGER_agent_t settings_agent)
+MANAGER_managed_game_t * MANAGER_new_managed_game(MANAGER_settings_agent_t settings_agent)
 {
     MANAGER_managed_game_t * p_manager = (MANAGER_managed_game_t *) malloc(sizeof(MANAGER_managed_game_t));
     assert(p_manager != NULL); // TODO: not assert here.
@@ -90,10 +92,10 @@ void MANAGER_free_managed_game(MANAGER_managed_game_t* p_a_manager)
         return;
     }
 
-    GAME_free_board(p_a_manager->p_board) // free the board
-    if (p_a_manager->p_settings != NULL) // if there are settings
+    GAME_free_board(p_a_manager->p_board); // free the board
+    if (p_a_manager->p_settings != NULL)   // if there are settings
     {
-        free(p_a_manager->p_settings); // free them
+        free(p_a_manager->p_settings);     // free them
     } // [TODO YVW] switch this with a dedicated function in SETTINGS.c
 
     free(p_a_manager);  // and only then free the game

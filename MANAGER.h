@@ -127,19 +127,31 @@ typedef struct  MANAGER_agent_play_command_response_s
 } MANAGER_agent_play_command_response_t;
 
 /**
- * An agent the manager calls to get required information
+ * An agent the manager calls to get play related commands
  */
-typedef struct MANAGER_agent_s
+typedef struct MANAGER_play_agent_s
 {
-    // Will be called every game loop iteration while in SETTINGS state to get relevant command from agent.
-    MANAGER_agent_settings_command_t (*prompt_settings_command)(const SETTINGS_settings_t *settings); 
     // Will be called every game loop iteration while in PLAY state to get relevant command from agent.
     MANAGER_agent_play_command_t (*prompt_play_command)(const GAME_board_t* board);
 
-     // Will be called with the output of the respective command above.
-     void (*handle_settigns_command_response)(MANAGER_agent_settings_command_t command, MANAGER_agent_settings_command_response_t response);
+     // Will be called with the output of the command above.
      void (*handle_play_command_response)(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response);
-} MANAGER_agent_t;
+} MANAGER_play_agent_t;
+
+/**
+ * An agent the manager calls to get settings related commands
+ */
+typedef struct MANAGER_settings_agent_s
+{
+    // Will be called every game loop iteration while in SETTINGS state to get relevant command from agent.
+    MANAGER_agent_settings_command_t (*prompt_settings_command)(const SETTINGS_settings_t *settings); 
+
+    // Will be called with the output of the command above.
+    void (*handle_settigns_command_response)(MANAGER_agent_settings_command_t command, MANAGER_agent_settings_command_response_t response);
+
+    // Will be called when game start is called, the settings agent should give it's accompanying play agent.
+    MANAGER_play_agent_t (*get_play_agent)();
+} MANAGER_settings_agent_t;
 
 
 /**
@@ -150,8 +162,8 @@ typedef struct MANAGER_managed_game_s
     MANAGER_STATE_E state;                    // current state of the manager
     GAME_board_t* p_board;                    // board holding the 
     SETTINGS_settings_t* p_settings;          // settings used in the game
-    MANAGER_agent_t settings_agent;           // agent used in settings state
-    MANAGER_agent_t play_agents[NUM_PLAYERS]; // agent BLACK and agent WHITE will be called respectively
+    MANAGER_settings_agent_t settings_agent;           // agent used in settings state
+    MANAGER_play_agent_t play_agents[NUM_PLAYERS]; // agent BLACK and agent WHITE will be called respectively
 
 } MANAGER_managed_game_t;
 
@@ -165,7 +177,7 @@ typedef struct MANAGER_managed_game_s
  * 
  * @return MANAGER_managed_game_t* 
  */
-MANAGER_managed_game_t * MANAGER_new_managed_game(MANAGER_agent_t settings_agent);
+MANAGER_managed_game_t * MANAGER_new_managed_game(MANAGER_settings_agent_t settings_agent);
 
 /**
  * Free a managed game and all accompanying resources.
