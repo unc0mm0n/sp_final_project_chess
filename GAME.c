@@ -226,7 +226,7 @@ GAME_move_full_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_move_t
             assert(0); // invalid color
         }
 
-        PRUNE(is_move || is_double_move || (is_diag_move && (is_capture || is_ep)), full_move);
+        PRUNE(!is_capture && (is_move || is_double_move) || (is_diag_move && (is_capture || is_ep)), full_move);
 
         if (SQ_TO_RANK(a_move.to) == LAST_RANK(player)) // promotion
         {
