@@ -62,17 +62,16 @@ SETTINGS_settings_t * SETTINGS_new_settings();
 BOOL SETTINGS_reset_to_default(SETTINGS_settings_t * p_a_settings);
 
 /**
- * Free settings object.
+ * Free settings object, is NULL safe.
  * 
  * @param p_a_settings pointer to settings to free
  *  
- * @return BOOL TRUE on success, FALSE on fail.
  */
-BOOL SETTINGS_free_settings(SETTINGS_settings_t* p_a_settings);
+void SETTINGS_free_settings(SETTINGS_settings_t* p_a_settings);
 
 /**
  * Change given setting to new value if possible. Return result
- * accordingly 
+ * accordingly
  * 
  * @param p_a_settings pointer to location to change settings
  * @param a_setting setting to change

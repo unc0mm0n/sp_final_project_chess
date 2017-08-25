@@ -138,6 +138,13 @@ GAME_board_t * GAME_new_board();
  */
 void GAME_free_board(GAME_board_t * p_a_board);
 
+/**
+ * Generate a copy of given board.
+ *
+ * @param p_a_board pointer to board.  
+ * @return GAME_board_t* copy of board 
+ */
+GAME_board_t* GAME_copy_board(const GAME_board_t* p_a_board);
 
 /**
  * Return TRUE if the player at given color attacks given 
@@ -195,7 +202,7 @@ GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board);
  * 
  * @return GAME_RESULT_E result of the game as defined in GAME_RESULT_E
  */
-GAME_RESULT_E GAME_get_result(GAME_board_t * p_a_board);
+GAME_RESULT_E GAME_get_result(const GAME_board_t * p_a_board);
 
 /**
  * Return an array of size GAME_MAX_POSSIBLE_MOVES of possible 

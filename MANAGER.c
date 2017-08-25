@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h> // tmp
 
 #include "MANAGER.h"
 
@@ -57,12 +58,13 @@ void _MANAGER_handle_play(MANAGER_managed_game_t* p_a_manager)
 
     COLOR game_current_player = GAME_current_player(p_a_manager->p_board);
     command = p_a_manager->play_agents[game_current_player].prompt_play_command(p_a_manager->p_board); 
-
+    
     switch (command.type) 
     {
     case MANAGER_PLAY_COMMAND_TYPE_MOVE:    
         response.output.move_result = GAME_make_move(p_a_manager->p_board, command.data.move);
         response.has_output = TRUE;
+        break;
     default:
         assert(0);
         break;
@@ -76,11 +78,12 @@ MANAGER_managed_game_t * MANAGER_new_managed_game(MANAGER_settings_agent_t setti
     MANAGER_managed_game_t * p_manager = (MANAGER_managed_game_t *) malloc(sizeof(MANAGER_managed_game_t));
     assert(p_manager != NULL); // TODO: not assert here.
 
-    p_manager->settings_agent = settings_agent; // keep the settings agent
-    p_manager->state = MANAGER_STATE_INIT;      // and start at the init state
-    p_manager->p_board = GAME_new_board();      // allocate a board
-    assert (p_manager->p_board != NULL);        // TODO: not assert here.
-    p_manager->p_settings = NULL;               // TBD
+    p_manager->settings_agent = settings_agent;         // keep the settings agent
+    p_manager->state = MANAGER_STATE_INIT;              // and start at the init state
+    p_manager->p_board = GAME_new_board();              // allocate a board
+    assert (p_manager->p_board != NULL);                // TODO: possibly not assert here.
+    p_manager->p_settings = SETTINGS_new_settings();    // TBD
+    assert (p_manager->p_settings != NULL);             // TODO: possibly not assert here.
 
     return p_manager;
 }

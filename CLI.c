@@ -5,6 +5,13 @@
 
 static BOOL gs_board_printed; // evil global
 
+/* flush a line from STDIN */
+void _CLI_fflush_line()
+{
+    char c;
+    while ((c = getchar()) && c != EOF && c != '\n');
+}
+
 MANAGER_settings_agent_t CLI_get_settings_agent()
 {
     MANAGER_settings_agent_t agent;
@@ -49,7 +56,7 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t* p_a_boa
 {
     /* TODO: tmp just to test game */
     assert (p_a_board->turn >= 0);
-
+    printf("Game result: %d\n", GAME_get_result(p_a_board));
     int move_digits;
     GAME_move_t move;
     MANAGER_agent_play_command_t command;
@@ -61,7 +68,8 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t* p_a_boa
     }
     printf("Enter move: ");
     scanf("%d", &move_digits);
-
+    _CLI_fflush_line();
+    printf("ok,\n");
     // ugly hack for easy testing
     move.from = SQ_FROM_FILE_RANK(move_digits / 1000 - 1, move_digits / 100 % 10 - 1);
     move.to = SQ_FROM_FILE_RANK(move_digits / 10 % 10 - 1, move_digits % 10 - 1);

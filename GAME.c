@@ -6,7 +6,6 @@
 
 #include "GAME.h"
 
-void CLI_print_board(const GAME_board_t*);
 /**
  * private function to initialize a new board
  */
@@ -109,28 +108,32 @@ BOOL _GAME_is_allowed_piece_movement(const GAME_board_t* p_a_board, GAME_move_t 
 /**
  * Return true if the current player has no legal moves.
  */
-BOOL _GAME_no_moves(GAME_board_t * p_a_board)
+BOOL _GAME_no_moves(const GAME_board_t * p_a_board)
 {
+    GAME_board_t* p_test_board = GAME_copy_board(p_a_board);
+
     GAME_move_full_t* p_moves;
     for (int file = 0; file < NUM_FILES; file++)
     {
         for (int rank = 0; rank < NUM_RANKS; rank++)
         {
-            p_moves = GAME_gen_moves_from_sq(p_a_board, SQ_FROM_FILE_RANK(file, rank));
+            p_moves = GAME_gen_moves_from_sq(p_test_board, SQ_FROM_FILE_RANK(file, rank));
 
             if (p_moves != NULL)
             {
                 if (p_moves[0].valid)
                 {
+                    printf("Piece can move! %x %x\n", p_moves[0].move.from, p_moves[0].move.to);
                     free(p_moves);
+                    GAME_free_board(p_test_board);
                     return FALSE;
                 }
                 free(p_moves);
             }
         }
     }
+    GAME_free_board(p_test_board);
     return TRUE;
-
 }
 
 /**
@@ -309,6 +312,18 @@ void GAME_free_board(GAME_board_t * p_a_board)
     }
 
     free(p_a_board);
+}
+
+GAME_board_t* GAME_copy_board(const GAME_board_t* p_a_board)
+{
+    if (p_a_board == NULL)
+    {
+        return NULL;
+    }
+    GAME_board_t* p_new = (GAME_board_t*) malloc(sizeof(GAME_board_t));
+    assert (p_new != NULL);
+    memcpy(p_new, p_a_board, sizeof(*p_new));
+    return p_new;
 }
 
 BOOL GAME_is_attacking(const GAME_board_t* p_a_board, COLOR color, square sq)
@@ -631,7 +646,7 @@ GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board)
     return last_move;
 }
 
-GAME_RESULT_E GAME_get_result(GAME_board_t* p_a_board)
+GAME_RESULT_E GAME_get_result(const GAME_board_t* p_a_board)
 {
 
     if (_GAME_no_moves(p_a_board)) // if a player has no move
@@ -716,26 +731,13 @@ char GAME_piece_letter_at(const GAME_board_t * p_a_board, square a_sq)
     return PIECE_desc_lut[p_a_board->pieces[a_sq]].letters[p_a_board->colors[a_sq] & 1];
 }
 
-void CLI_print_board(const GAME_board_t * p_a_board)
-{
-    for (int i=NUM_RANKS-1; i >= 0; i--)
-    {
-        for (int j=0; j < NUM_RANKS; j++)
-        {
-            printf("%c ", GAME_piece_letter_at(p_a_board, SQ_FROM_FILE_RANK(j,i)));
-        }
-        printf("\n");
-    }
-}
-
-/** Test function with more convenient notations */
+/** Test function with more convenient notations *
 void _GAME_test_play(GAME_board_t* p_board, int ff, int fr, int tf, int tr)
 {
     printf("Playing %d-%d to %d-%d\n", ff, fr, tf, tr);
     GAME_move_t m = {.from=SQ_FROM_FILE_RANK(ff-1,fr-1),.to=SQ_FROM_FILE_RANK(tf-1,tr-1),.promote=PIECE_TYPE_QUEEN };
     printf("square: from %x, to %x, promote %d\n", m.from, m.to, m.promote);
     printf("move result %d\n", GAME_make_move(p_board, m));
-    CLI_print_board(p_board);
     GAME_move_full_t lm = p_board->history[p_board->turn-1].move;
     printf("special_bm: %x castle_bm_w: %x castle_bm_b: %x ep: %x turn:%d \n", lm.special_bm, p_board->castle_bm[WHITE], p_board->castle_bm[BLACK], p_board->ep, p_board->turn);
     printf("current player %d\n", GAME_current_player(p_board));
@@ -761,7 +763,6 @@ void _GAME_test_print_legal_moves(GAME_board_t* p_board, int f, int r)
     free(moves);
 }
 
-/*
 int main()
 {
     GAME_board_t * p_board = GAME_new_board();
