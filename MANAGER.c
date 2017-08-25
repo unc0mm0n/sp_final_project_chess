@@ -3,6 +3,7 @@
 #include <stdio.h> // tmp
 
 #include "MANAGER.h"
+#include "AI.h"
 
 /**
  * Handle a game loop iteration in the MANAGER_STATE_SETTINGS 
@@ -46,8 +47,8 @@ void _MANAGER_handle_settings(MANAGER_managed_game_t* p_a_manager)
 void _MANAGER_handle_pre_play(MANAGER_managed_game_t* p_a_manager)
 {
     /*TODO: implement this, for now we just start a two player game*/
-    p_a_manager->play_agents[0] = p_a_manager->settings_agent.get_play_agent();
-    p_a_manager->play_agents[1] = p_a_manager->settings_agent.get_play_agent();
+    p_a_manager->play_agents[WHITE] = AI_get_play_agent(p_a_manager->p_settings->difficulty);
+    p_a_manager->play_agents[BLACK] = p_a_manager->settings_agent.get_play_agent();
     p_a_manager->state          = MANAGER_STATE_PLAY;
 }
 
@@ -55,15 +56,25 @@ void _MANAGER_handle_play(MANAGER_managed_game_t* p_a_manager)
 {
     MANAGER_agent_play_command_response_t response;
     MANAGER_agent_play_command_t command;
+    
+    response.has_output = FALSE; // we assume no output
+    COLOR game_current_player = GAME_current_player(p_a_manager->p_board); // the player at the start of the command
 
-    COLOR game_current_player = GAME_current_player(p_a_manager->p_board);
+    // prompt for action from the current player.
     command = p_a_manager->play_agents[game_current_player].prompt_play_command(p_a_manager->p_board); 
     
     switch (command.type) 
     {
-    case MANAGER_PLAY_COMMAND_TYPE_MOVE:    
+    case MANAGER_PLAY_COMMAND_TYPE_MOVE: // attempt to make move and notify results   
+        printf("square: from %x, to %x, promote %d\n", command.data.move.from, command.data.move.to, command.data.move.promote);
+        GAME_move_full_t lm = p_a_manager->p_board->history[p_a_manager->p_board->turn-1].move;
+        printf("special_bm: %x castle_bm_w: %x castle_bm_b: %x ep: %x turn:%d \n", lm.special_bm, p_a_manager->p_board->castle_bm[WHITE], p_a_manager->p_board->castle_bm[BLACK], p_a_manager->p_board->ep, p_a_manager->p_board->turn);
+        printf("current player %d\n", GAME_current_player(p_a_manager->p_board));
         response.output.move_result = GAME_make_move(p_a_manager->p_board, command.data.move);
         response.has_output = TRUE;
+        break;
+    case MANAGER_PLAY_COMMAND_TYPE_QUIT: // change to quit state
+        p_a_manager->state = MANAGER_STATE_QUIT;
         break;
     default:
         assert(0);
@@ -96,10 +107,7 @@ void MANAGER_free_managed_game(MANAGER_managed_game_t* p_a_manager)
     }
 
     GAME_free_board(p_a_manager->p_board); // free the board
-    if (p_a_manager->p_settings != NULL)   // if there are settings
-    {
-        free(p_a_manager->p_settings);     // free them
-    } // [TODO YVW] switch this with a dedicated function in SETTINGS.c
+    SETTINGS_free_settings(p_a_manager->p_settings);
 
     free(p_a_manager);  // and only then free the game
 }

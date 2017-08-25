@@ -123,7 +123,6 @@ BOOL _GAME_no_moves(const GAME_board_t * p_a_board)
             {
                 if (p_moves[0].valid)
                 {
-                    printf("Piece can move! %x %x\n", p_moves[0].move.from, p_moves[0].move.to);
                     free(p_moves);
                     GAME_free_board(p_test_board);
                     return FALSE;
@@ -215,17 +214,20 @@ GAME_move_full_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_move_t
         case WHITE:
             is_move = (a_move.to == SQ_UP(a_move.from));                                                        // move up
             is_double_move = (IS_WHITE_PAWN_RANK(a_move.from)) && (a_move.to == SQ_UP(SQ_UP(a_move.from)));     // or move twice up from initial square
+            PRUNE(!is_double_move || p_a_board->colors[SQ_UP(a_move.from)] == NO_COLOR, full_move);             // make sure no piece is jumped over
             is_diag_move = SQ_IS_DIAG_UP(a_move.from, a_move.to);                                               // or move diagonally if capture or ep
             break;
         case BLACK:
             is_move = (a_move.to == SQ_DOWN(a_move.from));                                                      // move down
             is_double_move = (IS_BLACK_PAWN_RANK(a_move.from)) && (a_move.to == SQ_DOWN(SQ_DOWN(a_move.from))); // or move twice down from initial square
+            PRUNE(!is_double_move || p_a_board->colors[SQ_DOWN(a_move.from)] == NO_COLOR, full_move);           // make sure no piece jumped over
             is_diag_move = SQ_IS_DIAG_DOWN(a_move.from, a_move.to);                                             // or move diagonally if capture or ep
             break;
         default:
             assert(0); // invalid color
         }
-
+        
+        // make sure diagonal moves are captures and non-diagonal moves are not captures
         PRUNE(!is_capture && (is_move || is_double_move) || (is_diag_move && (is_capture || is_ep)), full_move);
 
         if (SQ_TO_RANK(a_move.to) == LAST_RANK(player)) // promotion
@@ -296,7 +298,6 @@ GAME_board_t * GAME_new_board()
     
     // Initialize parameters
     p_board->turn         = 1;
-    p_board->result       = GAME_RESULT_PLAYING;
     p_board->ep           = GAME_NO_EP;
     p_board->castle_bm[0] = GAME_CASTLE_ALL;
     p_board->castle_bm[1] = GAME_CASTLE_ALL;
@@ -570,8 +571,6 @@ GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board)
     // update parameters
     memcpy(p_a_board->castle_bm, hist.castle_bm, sizeof(p_a_board->castle_bm));
     p_a_board->ep = hist.ep;
-
-    p_a_board->result = GAME_RESULT_PLAYING; // and make sure game is not marked as over
 
     /* reverse move */
     COLOR moving_player = GAME_current_player(p_a_board);

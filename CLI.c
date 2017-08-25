@@ -33,6 +33,7 @@ MANAGER_play_agent_t CLI_get_play_agent()
 
 void CLI_print_board(const GAME_board_t* p_a_board)
 {
+    printf("\n");
     for (int i=NUM_RANKS-1; i >= 0; i--)                                                                      
     {                                                                                                         
         for (int j=0; j < NUM_RANKS; j++)                                                                     
@@ -69,11 +70,15 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t* p_a_boa
     printf("Enter move: ");
     scanf("%d", &move_digits);
     _CLI_fflush_line();
-    printf("ok,\n");
     // ugly hack for easy testing
+    if (move_digits == 0)
+    {
+        command.type = MANAGER_PLAY_COMMAND_TYPE_QUIT;
+        return command;
+    }
     move.from = SQ_FROM_FILE_RANK(move_digits / 1000 - 1, move_digits / 100 % 10 - 1);
     move.to = SQ_FROM_FILE_RANK(move_digits / 10 % 10 - 1, move_digits % 10 - 1);
-
+    move.promote = PIECE_TYPE_QUEEN;
     command.type = MANAGER_PLAY_COMMAND_TYPE_MOVE;
     command.data.move = move;
     return command;

@@ -11,7 +11,7 @@
 #include "DEFS.h"
 
 #define GAME_BOARD_ARR_SIZE     (128)  // Size of board arrays.
-#define GAME_HISTORY_SIZE       (400)  // counted in half-moves, which is 1 player move.
+#define GAME_HISTORY_SIZE       (800)  // counted in half-moves, which is 1 player move.
                                        // enough to hold the entire game. The player limitations  on undos
                                        // should be enforced by the manager (and do not apply to the AI during
                                        // calculations).
@@ -117,7 +117,6 @@ typedef struct GAME_board_s
     square ep;                                       // Square into which taking with en-passant is possible
     int castle_bm[NUM_PLAYERS];                      // Bitmask indicating available castling per player (see GAME_CASTLE_BM_E)
     int turn;                                        // Current turn of the game, starts at 1.
-    GAME_RESULT_E result;                            // result of the game.
     GAME_history_t history[GAME_HISTORY_SIZE];     // Game history to undo moves
 } GAME_board_t;
 
