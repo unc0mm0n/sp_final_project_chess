@@ -16,33 +16,45 @@
  */
 typedef enum MANAGER_STATE_S
 {
-    MANAGER_STATE_SETTINGS,
-    MANAGER_STATE_PLAY,
-    MANAGER_STATE_INVALID
+    MANAGER_STATE_INIT,      // initial state before start was called
+    MANAGER_STATE_SETTINGS,  // state for settings change after manager start was called
+    MANAGER_STATE_PRE_PLAY,  // state after start was called where settings are used to populate everything
+    MANAGER_STATE_PLAY,      // state for playing the game after game start was called
+    MANAGER_STATE_QUIT,      // state for quitting the game and shutting down the manager
+    MANAGER_STATE_INVALID    // state following illegal operations [TODO: probably remove]
 } MANAGER_STATE_E;
 
 /**
- * All available command types to the manager.
+ * Available command types to the manager in SETTINGS state.
  */
-typedef enum MANAGER_COMMAND_TYPES_S
+typedef enum MANAGER_SETTINGS_COMMAND_TYPE_S
 {
-    MANAGER_COMMAND_TYPE_CHANGE_SETTING,
-    MANAGER_COMMAND_TYPE_START_GAME,
-    MANAGER_COMMAND_TYPE_MOVE,
-    MANAGER_COMMAND_TYPE_GET_MOVES,
-    MANAGER_COMMAND_TYPE_LOAD,
-    MANAGER_COMMAND_TYPE_SAVE,
-    MANAGER_COMMAND_TYPE_UNDO,
-    MANAGER_COMMAND_TYPE_RESET,
-    MANAGER_COMMAND_TYPE_QUIT
-} MANAGER_COMMAND_TYPES_E;
+    MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING,
+    MANAGER_SETTINGS_COMMAND_TYPE_DEFAULT_SETTINGS,
+    MANAGER_SETTINGS_COMMAND_TYPE_START_GAME,
+    MANAGER_SETTINGS_COMMAND_TYPE_LOAD,
+    MANAGER_SETTINGS_COMMAND_TYPE_QUIT
+} MANAGER_SETTINGS_COMMAND_TYPE_E;
 
 /**
- * A single agent command, used by the manager.
+ * Available command types to the manager in SETTINGS state.
  */
-typedef struct MANAGER_agent_command_s
+typedef enum MANAGER_PLAY_COMMAND_TYPE_S
 {
-    MANAGER_COMMAND_TYPES_E type;
+    MANAGER_PLAY_COMMAND_TYPE_MOVE,
+    MANAGER_PLAY_COMMAND_TYPE_GET_MOVES,
+    MANAGER_PLAY_COMMAND_TYPE_SAVE,
+    MANAGER_PLAY_COMMAND_TYPE_UNDO,
+    MANAGER_PLAY_COMMAND_TYPE_RESET,
+    MANAGER_PLAY_COMMAND_TYPE_QUIT
+} MANAGER_PLAY_COMMAND_TYPE_E;
+
+/**
+ * A single agent settings command, used by the manager.
+ */
+typedef struct MANAGER_agent_settings_command_s
+{
+    MANAGER_SETTINGS_COMMAND_TYPE_E type;
 
     // Will hold the required data for a single command based on its type.
     union {
@@ -52,48 +64,81 @@ typedef struct MANAGER_agent_command_s
            int value;
        } change_setting;
 
-       // MOVE command requires the move to make
-       GAME_move_t move;
-
-       // GET_MOVES command requires square to get moves for
-       square sq;
-
-       // SAVE and LOAD commands attempt to save and load a file
+       // LOAD command requires file to attempt to load
        struct {
            char * name;
            int length;
        } filename;
     } data;
-} MANAGER_agent_command_t;
+} MANAGER_agent_settings_command_t;
 
 /**
  * Union of all possible results if applicable, separable by 
  * command type. 
  * 
  */
-typedef struct  MANAGER_agent_command_output_s
+typedef struct  MANAGER_agent_settings_command_response_s
 {
-    BOOL has_output;
+    BOOL has_output;      // TRUE if the command has output (which should be distinguishable by command type).
     union {
         SETTINGS_CHANGE_RESULT_E settings_change_result; // CHANGE_SETTING_COMMAND
-        GAME_MOVE_RESULTS_E move_result; // MOVE command
-        GAME_move_full_t * possible_moves; // GET_MOVES command
-        BOOL load_succesful; // LOAD command (not yet supported)
-        BOOL save_succesful; // SAVE command (not yet supported)
-        GAME_move_full_t * undone_moves; // UNDO command
+        BOOL load_succesful; // LOAD command
     } output;
-} MANAGER_agent_command_output_t;
+} MANAGER_agent_settings_command_response_t;
+
+/**
+ * A single agent play command, used by the manager.
+ */
+typedef struct MANAGER_agent_play_command_s
+{
+    MANAGER_PLAY_COMMAND_TYPE_E type;
+
+    // Will hold the required data for a single command based on its type.
+    union {
+
+       // MOVE command requires the move to make
+       GAME_move_t move;
+
+       // GET_MOVES command requires square to get moves for
+       square sq;
+
+       // SAVE acommand requires path of file to save to
+       struct {
+           char * name;
+           int length;
+       } filename;
+    } data;
+} MANAGER_agent_play_command_t;
+
+/**
+ * Union of all possible results if applicable, separable by 
+ * command type. 
+ * 
+ */
+typedef struct  MANAGER_agent_play_command_response_s
+{
+    BOOL has_output;      // TRUE if the command has output (which should be distinguishable by command type).
+    union {
+        GAME_MOVE_RESULTS_E move_result;   // MOVE command
+        GAME_move_full_t * possible_moves; // GET_MOVES command
+        BOOL save_succesful;               // SAVE command
+        GAME_move_full_t * undone_moves;   // UNDO command
+    } output;
+} MANAGER_agent_play_command_response_t;
 
 /**
  * An agent the manager calls to get required information
  */
 typedef struct MANAGER_agent_s
 {
-    // Will be called every game loop iteration to get command from agent. Borad will be NULL if not in PLAY state.
-    MANAGER_agent_command_t (*prompt_command)(MANAGER_STATE_E state, const GAME_board_t* board, const SETTINGS_settings_t* settings); 
+    // Will be called every game loop iteration while in SETTINGS state to get relevant command from agent.
+    MANAGER_agent_settings_command_t (*prompt_settings_command)(const SETTINGS_settings_t *settings); 
+    // Will be called every game loop iteration while in PLAY state to get relevant command from agent.
+    MANAGER_agent_play_command_t (*prompt_play_command)(const GAME_board_t* board);
 
-     // Will be called with the output of the command above, the has_output flag specifies whether any output was given.
-     void (*handle_command_result)(MANAGER_agent_command_t command, MANAGER_agent_command_output_t result);
+     // Will be called with the output of the respective command above.
+     void (*handle_settigns_command_response)(MANAGER_agent_settings_command_t command, MANAGER_agent_settings_command_response_t response);
+     void (*handle_play_command_response)(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response);
 } MANAGER_agent_t;
 
 
@@ -103,8 +148,8 @@ typedef struct MANAGER_agent_s
 typedef struct MANAGER_managed_game_s
 {
     MANAGER_STATE_E state;                    // current state of the manager
-    GAME_board_t board;                       // board holding the 
-    SETTINGS_settings_t settings;             // settings used in the game
+    GAME_board_t* p_board;                    // board holding the 
+    SETTINGS_settings_t* p_settings;          // settings used in the game
     MANAGER_agent_t settings_agent;           // agent used in settings state
     MANAGER_agent_t play_agents[NUM_PLAYERS]; // agent BLACK and agent WHITE will be called respectively
 
@@ -114,13 +159,20 @@ typedef struct MANAGER_managed_game_s
  * Create and return a new managed game. 
  * The play_agents will be automatically filled according to the 
  * settings, using either an ai agent or the agent given as 
- * settings_agent. 
+ * settings_agent when start_game is called. 
  * 
  * @param settings_agent the agent used to set the settings.
  * 
  * @return MANAGER_managed_game_t* 
  */
 MANAGER_managed_game_t * MANAGER_new_managed_game(MANAGER_agent_t settings_agent);
+
+/**
+ * Free a managed game and all accompanying resources.
+ * 
+ * @param p_a_manager pointer to manager to free.
+ */
+void MANAGER_free_managed_game(MANAGER_managed_game_t * p_a_manager); 
 
 /**
  * Start a new game.

@@ -130,8 +130,9 @@ typedef struct GAME_board_s
 GAME_board_t * GAME_new_board();
 
 /**
- * Free the board and all resources allocated to it (NOT 
+ * free the board and all resources allocated to it (NOT 
  * INCLUDING returned possible_move arrays). 
+ * Is NULL safe, and will return on null input. 
  *  
  * @param p_a_board pointer to board 
  */

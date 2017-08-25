@@ -1,11 +1,10 @@
 #include <stdlib.h>
-
-#include "GAME.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <stdio.h> // tmp
+
+#include "GAME.h"
 
 void CLI_print_board(const GAME_board_t*);
 /**
@@ -718,13 +717,18 @@ COLOR GAME_current_player(const GAME_board_t * p_a_board)
     return (p_a_board->turn & 1);
 }
 
+char GAME_piece_letter_at(const GAME_board_t * p_a_board, square a_sq)
+{
+    return PIECE_desc_lut[p_a_board->pieces[a_sq]].letters[p_a_board->colors[a_sq] & 1])
+}
+
 void CLI_print_board(const GAME_board_t * p_a_board)
 {
     for (int i=NUM_RANKS-1; i >= 0; i--)
     {
         for (int j=0; j < NUM_RANKS; j++)
         {
-            printf("%c ",PIECE_desc_lut[p_a_board->pieces[SQ_FROM_FILE_RANK(j,i)]].letters[p_a_board->colors[SQ_FROM_FILE_RANK(j,i)] & 1]);
+            printf("%c ",; GAME_piece_letter_at(p_a_board, SQ_FROM_FILE_RANK(j,i));
         }
         printf("\n");
     }
