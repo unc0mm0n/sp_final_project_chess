@@ -8,6 +8,7 @@
 #ifndef MANAGER_IMP
 #define MANAGER_IMP
 
+#include "DEFS.h"
 #include "GAME.h"
 #include "SETTINGS.h"
 

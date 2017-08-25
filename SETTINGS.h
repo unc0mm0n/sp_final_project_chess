@@ -3,7 +3,7 @@
  * legality thereof. 
  */
 
-#ifndef SETTING_IMP
+#ifndef SETTINGS_IMP
 #define SETTINGS_IMP
 
 #include "DEFS.h"
