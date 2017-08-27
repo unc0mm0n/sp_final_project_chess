@@ -120,7 +120,7 @@ typedef struct  MANAGER_agent_play_command_response_s
 {
     BOOL has_output;      // TRUE if the command has output (which should be distinguishable by command type).
     union {
-        GAME_MOVE_RESULTS_E move_result;   // MOVE command
+        GAME_MOVE_RESULT_TYPE_E move_result;   // MOVE command
         GAME_move_full_t * possible_moves; // GET_MOVES command
         BOOL save_succesful;               // SAVE command
         GAME_move_full_t * undone_moves;   // UNDO command

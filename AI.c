@@ -100,7 +100,7 @@ MANAGER_agent_play_command_t _AI_prompt_play_command_expert(const GAME_board_t* 
 void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response)
 {
     assert(command.type == MANAGER_PLAY_COMMAND_TYPE_MOVE || command.type == MANAGER_PLAY_COMMAND_TYPE_QUIT);
-    assert(!response.has_output || response.output.move_result == GAME_MOVE_RESULT_SUCCESS);
+    assert(!response.has_output || response.output.move_result == GAME_MOVE_RESULT_TYPE_SUCCESS);
     return;
 }
 

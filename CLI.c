@@ -95,7 +95,7 @@ void CLI_handle_settings_command_response(MANAGER_agent_settings_command_t comma
 void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response)
 {
     assert (command.type >= 0);
-    if (response.has_output && response.output.move_result == GAME_MOVE_RESULT_SUCCESS)
+    if (response.has_output && response.output.move_result == GAME_MOVE_RESULT_TYPE_SUCCESS)
     {
         gs_board_printed = FALSE;
     }

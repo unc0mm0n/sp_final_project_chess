@@ -419,25 +419,29 @@ BOOL GAME_is_checked(const GAME_board_t* p_a_board, COLOR color)
     return FALSE;
 }
 
-GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
+game_move_result_t GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
 {
     
     COLOR player = GAME_current_player(p_a_board);
+    GAME_move_result_t result;
 
     if (!SQ_IS_LEGAL(a_move.from)) // from square not on board.
     {
-        return GAME_MOVE_RESULT_ILLEGALE_SQUARE;
+        result.type = GAME_MOVE_RESULT_TYPE_ILLEGALE_SQUARE;
+        return result;
     }
     //printf("playing: %d %d %d %d\n", player, a_move.from, a_move.to, p_a_board->colors[a_move.from]);
     if (p_a_board->colors[a_move.from] != player) // empty or opponent piece
     {
-        return GAME_MOVE_RESULT_NO_PIECE;
+        result.type = GAME_MOVE_RESULT_TYPE_NO_PIECE;
+        return result;
     }
 
     GAME_move_full_t full_move = _GAME_analayze_move(p_a_board, a_move); 
     if (!full_move.valid)
     {
-        return GAME_MOVE_RESULT_ILLEGAL_MOVE;
+        result.type = GAME_MOVE_RESULT_TYPE_ILLEGAL_MOVE;
+        return result;
     }
 
     /* The move follows all movement rules, now to check if the move can be made without creating an illegal position */
@@ -448,7 +452,8 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
     {
         if (GAME_is_checked(p_a_board, player))
         {
-            return GAME_MOVE_RESULT_ILLEGAL_MOVE; // can't castle while in check.
+            result.type = GAME_MOVE_RESULT_TYPE_ILLEGAL_MOVE; // can't castle while in check.
+            return result;
         }
         square rook_from, rook_to;  // how to move the rook following the castle.
         // check the middle squares passed by the king is safe (the original and final squares are tested anyway)
@@ -457,7 +462,8 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
         case C1:    // white queenside castle
             if (GAME_is_attacking(p_a_board, opponent, D1))
             {
-                return GAME_MOVE_RESULT_ILLEGAL_MOVE;
+                result.type = GAME_MOVE_RESULT_TYPE_ILLEGAL_MOVE;
+                return result;
             }
             assert(p_a_board->pieces[A1] == PIECE_TYPE_ROOK); // should have been handled long ago by bitmask
             rook_from = A1;
@@ -466,7 +472,8 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
         case G1:     // white kingside castle
             if (GAME_is_attacking(p_a_board, opponent, F1)) 
             {
-                 return GAME_MOVE_RESULT_ILLEGAL_MOVE;
+                 result.type = GAME_MOVE_RESULT_TYPE_ILLEGAL_MOVE;
+                 return result;
             }
             assert(p_a_board->pieces[H1] == PIECE_TYPE_ROOK); // should have been handled long ago by bitmask
             rook_from = H1;
@@ -475,7 +482,8 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
         case C8:     // black queenside castle
             if (GAME_is_attacking(p_a_board, opponent, D8)) 
             {
-                 return GAME_MOVE_RESULT_ILLEGAL_MOVE;
+                 result.type = GAME_MOVE_RESULT_TYPE_ILLEGAL_MOVE;
+                 return result;
             }
             assert(p_a_board->pieces[A8] == PIECE_TYPE_ROOK); // should have been handled long ago by bitmask
             rook_from = A8;
@@ -484,7 +492,8 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
         case G8:     // black kingside castle
             if (GAME_is_attacking(p_a_board, opponent, F8)) 
             {
-                 return GAME_MOVE_RESULT_ILLEGAL_MOVE;
+                 result.type = GAME_MOVE_RESULT_TYPE_ILLEGAL_MOVE;
+                 return result;
             }
             assert(p_a_board->pieces[H8] == PIECE_TYPE_ROOK); // should have been handled long ago by bitmask
             rook_from = H8;
@@ -551,7 +560,8 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
     if (GAME_is_checked(p_a_board, player))
     {
         GAME_undo_move(p_a_board); // All this was for naught.
-        return GAME_MOVE_RESULT_ILLEGAL_MOVE;
+        result.type = GAME_MOVE_RESULT_TYPE_ILLEGAL_MOVE;
+        return result;
     }
 
     // and update final parameters in the move history.
@@ -559,7 +569,9 @@ GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
     p_a_board->history[p_a_board->turn - 1].move.special_bm |= GAME_SPECIAL_CHECK * is_check; 
     p_a_board->history[p_a_board->turn - 1].move.special_bm |= GAME_SPECIAL_UNDER_ATTACK * GAME_is_attacking(p_a_board, OTHER_COLOR(player), a_move.to);
 
-    return GAME_MOVE_RESULT_SUCCESS;
+    result.type = GAME_MOVE_RESULT_TYPE_SUCCESS;
+    result.full_move = full_move;
+    return result;
 }
 
 GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board)
@@ -686,8 +698,8 @@ GAME_move_full_t* GAME_gen_moves_from_sq(GAME_board_t* p_a_board, square a_from)
         for (int file=0; file < NUM_FILES; file++)
         {
             GAME_move_t move = {.from = a_from, .to=SQ_FROM_FILE_RANK(file, rank), .promote=PIECE_TYPE_QUEEN};
-            GAME_MOVE_RESULTS_E move_res = GAME_make_move(p_a_board, move);
-            if (move_res == GAME_MOVE_RESULT_SUCCESS)
+            GAME_MOVE_RESULT_TYPE_E move_res = GAME_make_move(p_a_board, move);
+            if (move_res == GAME_MOVE_RESULT_TYPE_SUCCESS)
             {
                 // a succesfull move was made. Undo and remember it.
                 p_moves[count] = GAME_undo_move(p_a_board);
@@ -705,7 +717,7 @@ GAME_move_full_t* GAME_gen_moves_from_sq(GAME_board_t* p_a_board, square a_from)
                         }
                         GAME_move_t move = {.from = a_from, .to=SQ_FROM_FILE_RANK(file, rank), .promote=piece_type};
                         move_res = GAME_make_move(p_a_board, move);
-                        if (move_res == GAME_MOVE_RESULT_SUCCESS)
+                        if (move_res == GAME_MOVE_RESULT_TYPE_SUCCESS)
                         {
                             p_moves[count] = GAME_undo_move(p_a_board);
                             count++;

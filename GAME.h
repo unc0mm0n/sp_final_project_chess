@@ -51,14 +51,14 @@ typedef enum GAME_SPECIAL_BM_S
 /**
  * Possible results of attempting to make a move.
  */
-typedef enum GAME_MOVE_RESULTS_S
+typedef enum GAME_MOVE_RESULT_TYPE_S
 {
-    GAME_MOVE_RESULT_SUCCESS,
-    GAME_MOVE_RESULT_ILLEGALE_SQUARE,   // original square is illegal.
-    GAME_MOVE_RESULT_NO_PIECE,          // there is no piece (of the current player's color) in the original square
-    GAME_MOVE_RESULT_ILLEGAL_MOVE       // the move with the piece is illegal
+    GAME_MOVE_RESULT_TYPE_SUCCESS,
+    GAME_MOVE_RESULT_TYPE_ILLEGALE_SQUARE,   // original square is illegal.
+    GAME_MOVE_RESULT_TYPE_NO_PIECE,          // there is no piece (of the current player's color) in the original square
+    GAME_MOVE_RESULT_TYPE_ILLEGAL_MOVE       // the move with the piece is illegal
 
-} GAME_MOVE_RESULTS_E;
+} GAME_MOVE_RESULT_TYPE_E;
 
 /**
  * Possible game results.
@@ -93,6 +93,17 @@ typedef struct GAME_move_full_s
     int special_bm;           // Bitmask indicating special behaviour (see GAME_SPECIAL_BM_E)
 
 } GAME_move_full_t;
+
+/**
+ * Returned whenever make-move is called with the result of the 
+ * move. 
+ */
+typedef struct GAME_move_result_s
+{
+    GAME_MOVE_RESULT_TYPE_E type;
+    GAME_move_full_t full_move;     // populated if and only if type is GAME_MOVE_RESULT_TYPE_SUCCESS
+
+} GAME_move_result_t;
 
 /**
  * Struct to remember important history parameters (which move 
@@ -173,9 +184,10 @@ BOOL GAME_is_checked(const GAME_board_t* p_a_board, COLOR color);
  * @param p_a_board pointer to board
  * @param a_move move to make
  * 
- * @return GAME_MOVE_RESULTS_E result of trying to make the move
+ * @return GAME_MOVE_RESULT_TYPE_E result of trying to make the 
+ *         move
  */
-GAME_MOVE_RESULTS_E GAME_make_move(GAME_board_t *p_a_board, GAME_move_t a_move); 
+GAME_move_result_t GAME_make_move(GAME_board_t *p_a_board, GAME_move_t a_move); 
 
 /**
  * Undo a single move, and return the history_move struct of the 
