@@ -78,10 +78,26 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t* p_a_boa
     }
     move.from = SQ_FROM_FILE_RANK(move_digits / 1000 - 1, move_digits / 100 % 10 - 1);
     move.to = SQ_FROM_FILE_RANK(move_digits / 10 % 10 - 1, move_digits % 10 - 1);
-    move.promote = PIECE_TYPE_QUEEN;
+    move.promote = PIECE_TYPE_EMPTY;
     command.type = MANAGER_PLAY_COMMAND_TYPE_MOVE;
     command.data.move = move;
     return command;
+}
+
+PIECE_TYPE_E (*prompt_promote_piece)(const GAME_board_t* p_a_board, GAME_move_result_t)
+{
+    /* TODO: tmp just to test game */
+    assert (p_a_board->turn >= 0);
+    assert(GAME_move_result_t.played == FALSE);  // will actually stay, to make sure we are not prompted
+                                                 // on a played move.
+
+    PIECE_TYPE_E move_digits;
+    printf("Enter piece promote: ");
+    scanf("%d", &move_digits);
+    _CLI_fflush_line();
+    // ugly hack for easy testing
+
+    return move_digits;
 }
 
 void CLI_handle_settings_command_response(MANAGER_agent_settings_command_t command, MANAGER_agent_settings_command_response_t response)
@@ -95,7 +111,7 @@ void CLI_handle_settings_command_response(MANAGER_agent_settings_command_t comma
 void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response)
 {
     assert (command.type >= 0);
-    if (response.has_output && response.output.move_result == GAME_MOVE_RESULT_TYPE_SUCCESS)
+    if (response.has_output && response.output.move_result.played)
     {
         gs_board_printed = FALSE;
     }

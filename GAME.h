@@ -11,7 +11,7 @@
 #include "DEFS.h"
 
 #define GAME_BOARD_ARR_SIZE     (128)  // Size of board arrays.
-#define GAME_HISTORY_SIZE       (800)  // counted in half-moves, which is 1 player move.
+#define GAME_HISTORY_SIZE       (200)  // counted in half-moves, which is 1 player move.
                                        // enough to hold the entire game. The player limitations  on undos
                                        // should be enforced by the manager (and do not apply to the AI during
                                        // calculations).
@@ -51,14 +51,17 @@ typedef enum GAME_SPECIAL_BM_S
 /**
  * Possible results of attempting to make a move.
  */
-typedef enum GAME_MOVE_RESULT_TYPE_S
+typedef enum GAME_MOVE_VERDICT_S
 {
-    GAME_MOVE_RESULT_TYPE_SUCCESS,
-    GAME_MOVE_RESULT_TYPE_ILLEGALE_SQUARE,   // original square is illegal.
-    GAME_MOVE_RESULT_TYPE_NO_PIECE,          // there is no piece (of the current player's color) in the original square
-    GAME_MOVE_RESULT_TYPE_ILLEGAL_MOVE       // the move with the piece is illegal
+    GAME_MOVE_VERDICT_LEGAL,
+    GAME_MOVE_VERDICT_ILLEGALE_SQUARE,   // original square is illegal.
+    GAME_MOVE_VERDICT_NO_PIECE,          // there is no piece (of the current player's color) in the original square
+    GAME_MOVE_VERDICT_ILLEGAL_MOVE,      // the move with the piece is illegal
+    GAME_MOVE_VERDICT_KING_THREATENED,   // Move leaves king in check
+    GAME_MOVE_VERDICT_ILLEGAL_PROMOTION, // the move is a promotion into an illegal piece
+    GAME_MOVE_VERDICT_ILLEGAL_CASTLE     // the move is an illegal castle
 
-} GAME_MOVE_RESULT_TYPE_E;
+} GAME_MOVE_VERDICT_E;
 
 /**
  * Possible game results.
@@ -85,14 +88,14 @@ typedef struct GAME_move_s
  * and whenever information about moves should be returned from 
  * a function call. 
  */
-typedef struct GAME_move_full_s
+typedef struct GAME_move_analysis_s
 {
-    BOOL valid;               // is move a valid piece move (not necesserily legal)
-    GAME_move_t move;         // move that was played
-    PIECE_TYPE_E capture;     // piece that was captured
-    int special_bm;           // Bitmask indicating special behaviour (see GAME_SPECIAL_BM_E)
+    GAME_MOVE_VERDICT_E verdict;    // is move a valid piece move (not necesserily legal)
+    GAME_move_t move;               // move that was played
+    PIECE_TYPE_E capture;           // piece that was captured
+    int special_bm;                 // Bitmask indicating special behaviour (see GAME_SPECIAL_BM_E)
 
-} GAME_move_full_t;
+} GAME_move_analysis_t;
 
 /**
  * Returned whenever make-move is called with the result of the 
@@ -100,8 +103,8 @@ typedef struct GAME_move_full_s
  */
 typedef struct GAME_move_result_s
 {
-    GAME_MOVE_RESULT_TYPE_E type;
-    GAME_move_full_t full_move;     // populated if and only if type is GAME_MOVE_RESULT_TYPE_SUCCESS
+    BOOL played;                        // True if the move was played on the board.
+    GAME_move_analysis_t move_analysis;     // the move analysis, so that the exact issues can be parsed.
 
 } GAME_move_result_t;
 
@@ -111,7 +114,7 @@ typedef struct GAME_move_result_s
  */
 typedef struct GAME_history_s
 {
-    GAME_move_full_t move;                 // The move that was played with all of it's parameters
+    GAME_move_analysis_t move;                 // The move that was played with all of it's parameters
     int              castle_bm[2];         // Bitmask indicating available castling (see GAME_CASTLE_BM_E)
     square           ep;                   // whether ep was legal
 } GAME_history_t;
@@ -184,7 +187,7 @@ BOOL GAME_is_checked(const GAME_board_t* p_a_board, COLOR color);
  * @param p_a_board pointer to board
  * @param a_move move to make
  * 
- * @return GAME_MOVE_RESULT_TYPE_E result of trying to make the 
+ * @return GAME_MOVE_VERDICT_E result of trying to make the 
  *         move
  */
 GAME_move_result_t GAME_make_move(GAME_board_t *p_a_board, GAME_move_t a_move); 
@@ -200,7 +203,7 @@ GAME_move_result_t GAME_make_move(GAME_board_t *p_a_board, GAME_move_t a_move);
  * @return GAME_history_move_t history_move of move undone or 
  *         NULL.
  */
-GAME_move_full_t GAME_undo_move(GAME_board_t * p_a_board);
+GAME_move_analysis_t GAME_undo_move(GAME_board_t * p_a_board);
 
 /**
  * Check the result of the game and return it.
@@ -220,7 +223,7 @@ GAME_RESULT_E GAME_get_result(const GAME_board_t * p_a_board);
  * moves for piece at a_from square. Allocates memory that must be
  * freed!
  *
- * End of output will be the first element for which move_full.valid
+ * End of output will be the first element for which move_analysis.valid
  * is FALSE.
  *  
  * Return  NULL if there is no piece of the current player to play's
@@ -229,9 +232,9 @@ GAME_RESULT_E GAME_get_result(const GAME_board_t * p_a_board);
  * @param p_a_board pointer to board
  * @param a_from square from which the piece moves
  * 
- * @return GAME_move_full_t* Array of possible moves or NULL
+ * @return GAME_move_analysis_t* Array of possible moves or NULL
  */
-GAME_move_full_t * GAME_gen_moves_from_sq(GAME_board_t * p_a_board, square a_from);
+GAME_move_analysis_t * GAME_gen_moves_from_sq(GAME_board_t * p_a_board, square a_from);
 
 /** 
  * Return the color of the current player to play. 

@@ -20,8 +20,8 @@ MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_boa
 
     MANAGER_agent_play_command_t command;
     GAME_board_t * p_board_copy = GAME_copy_board(p_a_board);
-    GAME_move_full_t * p_moves;
-    GAME_move_full_t * tmp;
+    GAME_move_analysis_t * p_moves;
+    GAME_move_analysis_t * tmp;
     GAME_move_t move;
 
     command.type = MANAGER_PLAY_COMMAND_TYPE_MOVE;
@@ -37,32 +37,32 @@ MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_boa
     
     while (TRUE)
     {
-    for (int file = 0; file < NUM_FILES; file++)
-    {
-        for (int rank = 0; rank < NUM_RANKS; rank++)
+        for (int file = 0; file < NUM_FILES; file++)
         {
-            p_moves = GAME_gen_moves_from_sq(p_board_copy, SQ_FROM_FILE_RANK(file, rank));
-            if (p_moves != NULL)
+            for (int rank = 0; rank < NUM_RANKS; rank++)
             {
-                tmp = p_moves;
-                while(tmp->valid == TRUE)
+                p_moves = GAME_gen_moves_from_sq(p_board_copy, SQ_FROM_FILE_RANK(file, rank));
+                if (p_moves != NULL)
                 {
-                    if (rand() < RAND_MAX / 10)
+                    tmp = p_moves;
+                    while(tmp->valid == TRUE)
                     {
-                        move.to = tmp->move.to;
-                        move.from = tmp->move.from;
-                        move.promote = PIECE_TYPE_QUEEN;
-                        command.data.move = move;
-                        free(p_moves);
-                        GAME_free_board(p_board_copy);
-                        return command;
+                        if (rand() < RAND_MAX / 10)
+                        {
+                            move.to = tmp->move.to;
+                            move.from = tmp->move.from;
+                            move.promote = PIECE_TYPE_QUEEN;
+                            command.data.move = move;
+                            free(p_moves);
+                            GAME_free_board(p_board_copy);
+                            return command;
+                        }
+                        tmp++;
                     }
-                    tmp++;
+                    free(p_moves);
                 }
-                free(p_moves);
             }
         }
-    }
     }
 
     //GAME_free_board(p_board_copy);
@@ -100,7 +100,7 @@ MANAGER_agent_play_command_t _AI_prompt_play_command_expert(const GAME_board_t* 
 void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response)
 {
     assert(command.type == MANAGER_PLAY_COMMAND_TYPE_MOVE || command.type == MANAGER_PLAY_COMMAND_TYPE_QUIT);
-    assert(!response.has_output || response.output.move_result == GAME_MOVE_RESULT_TYPE_SUCCESS);
+    assert(!response.has_output || response.output.move_result.move_analysis.verdict == GAME_MOVE_VERDICT_LEGAL); // computer must make legal moves
     return;
 }
 

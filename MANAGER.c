@@ -56,6 +56,7 @@ void _MANAGER_handle_play(MANAGER_managed_game_t* p_a_manager)
 {
     MANAGER_agent_play_command_response_t response;
     MANAGER_agent_play_command_t command;
+    GAME_move_result_t move_result;
     
     response.has_output = FALSE; // we assume no output
     COLOR game_current_player = GAME_current_player(p_a_manager->p_board); // the player at the start of the command
@@ -66,11 +67,22 @@ void _MANAGER_handle_play(MANAGER_managed_game_t* p_a_manager)
     switch (command.type) 
     {
     case MANAGER_PLAY_COMMAND_TYPE_MOVE: // attempt to make move and notify results   
+        /* DEBUG PRINTS*/
         printf("square: from %x, to %x, promote %d\n", command.data.move.from, command.data.move.to, command.data.move.promote);
-        GAME_move_full_t lm = p_a_manager->p_board->history[p_a_manager->p_board->turn-1].move;
+        GAME_move_analysis_t lm = p_a_manager->p_board->history[p_a_manager->p_board->turn-1].move;
         printf("special_bm: %x castle_bm_w: %x castle_bm_b: %x ep: %x turn:%d \n", lm.special_bm, p_a_manager->p_board->castle_bm[WHITE], p_a_manager->p_board->castle_bm[BLACK], p_a_manager->p_board->ep, p_a_manager->p_board->turn);
         printf("current player %d\n", GAME_current_player(p_a_manager->p_board));
-        response.output.move_result = GAME_make_move(p_a_manager->p_board, command.data.move);
+        /* END DEBUG PRINTS*/
+
+        move_result = GAME_make_move(p_a_manager->p_board, command.data.move);
+        while (!move_result.played && move_result.move_analysis.verdict == GAME_MOVE_VERDICT_ILLEGAL_PROMOTION) 
+        {
+            PIECE_TYPE_E piece = p_a_manager->play_agents[game_current_player].prompt_promote_piece(p_a_manager->p_board, move_result);
+            command.data.move.promote = piece;
+            move_result = GAME_make_move(p_a_manager->p_board, command.data.move);
+        }
+
+        response.output.move_result = move_result; 
         response.has_output = TRUE;
         break;
     case MANAGER_PLAY_COMMAND_TYPE_QUIT: // change to quit state

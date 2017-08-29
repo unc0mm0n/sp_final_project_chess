@@ -120,10 +120,10 @@ typedef struct  MANAGER_agent_play_command_response_s
 {
     BOOL has_output;      // TRUE if the command has output (which should be distinguishable by command type).
     union {
-        GAME_MOVE_RESULT_TYPE_E move_result;   // MOVE command
-        GAME_move_full_t * possible_moves; // GET_MOVES command
-        BOOL save_succesful;               // SAVE command
-        GAME_move_full_t * undone_moves;   // UNDO command
+        GAME_move_result_t     move_result;    // MOVE command
+        GAME_move_analysis_t * possible_moves; // GET_MOVES command
+        BOOL                   save_succesful; // SAVE command
+        GAME_move_analysis_t * undone_moves;   // UNDO command
     } output;
 } MANAGER_agent_play_command_response_t;
 
@@ -134,6 +134,9 @@ typedef struct MANAGER_play_agent_s
 {
     // Will be called every game loop iteration while in PLAY state to get relevant command from agent.
     MANAGER_agent_play_command_t (*prompt_play_command)(const GAME_board_t* board);
+
+    // Will be called while a promote move is legal but the promoted piece is not.
+    PIECE_TYPE_E (*prompt_promote_piece)(const GAME_board_t* board, GAME_move_result_t);
 
      // Will be called with the output of the command above.
      void (*handle_play_command_response)(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response);
