@@ -9,6 +9,9 @@
 
 #include "GAME.h"
 #include "MANAGER.h"
+
+#define AI_MAX_SCORE 10000;
+#define AI_MIN_SCORE (-AI_MAX_SCORE);
 /**
  * Enum of available AI difficulties
  */
@@ -20,6 +23,15 @@ typedef enum AI_DIFFICULTY_S
     AI_DIFFICULTY_HARD,
     AI_DIFFICULTY_EXPERT 
 } AI_DIFFICULTY_E;
+
+/**
+ * Game move with score
+ */
+typedef struct AI_move_score_s
+{
+    int score;
+    GAME_move_t move;
+} AI_move_score_t;
 
 /**
  * Return a play agent for the AI at given difficulty.

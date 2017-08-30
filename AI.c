@@ -14,6 +14,108 @@
  * variety between difficulties
  */
 
+int _AI_calculate_score_heuristic(const GAME_board_t* p_board)
+{
+
+}
+
+AI_move_score_t _AI_minimax(GAME_board_t* p_board, int depth, int a, int b, COLOR current_player)
+{
+    AI_move_score_t move_score;
+    GAME_move_t move;
+    int count;
+    GAME_move_analysis_t* p_moves;
+
+    AI_move_score_t v;     // result to be returned
+    AI_move_score_t tmp_v; // result of recursive call
+
+    if (depth == 0 || GAME_get_result(p_board) != GAME_RESULT_PLAYING)
+    {
+        move_score.score = _AI_calculate_score_heuristic(p_board);
+        return move_score;
+    }
+
+    if (current_player == GAME_get_current_player(p_board)))
+    {
+        v.score = AI_MIN_SCORE;
+        for (int file = 0; file < NUM_FILES; file++)
+        {
+            for (int row = 0; row < NUM_ROWS; row++)
+            {
+                p_moves = GAME_gen_moves_from_sq(p_board, SQ_FROM_FILE_RANK(file,rank));
+                if (p_moves == NULL)
+                {
+                        free(p_moves);
+                        continue;
+                }
+
+                count = 0;
+                while (p_moves[count] != GAME_MOVE_VERDICT_ILLEGAL)
+                {
+                    GAME_make_move(p_board, p_moves[count].move);
+                    tmp_v =  _AI_minimax(p_board, depth – 1, a, b, current_player));
+
+                    if (v.score < tmp_v.score)
+                    {
+                        v.score = tmp_v.score;
+                        v.move = tmp_v.move;
+                    }
+
+                    a = MAX(a, v.score);
+
+                    if (b <= a) 
+                    {
+                            break; /* cut-off */
+                    }
+                    count++;
+                }
+                free(p_moves);
+            }
+        }
+        return v;
+    }
+    else
+    {
+         v.score = AI_MAX_SCORE;
+        for (int file = 0; file < NUM_FILES; file++)
+        {
+            for (int row = 0; row < NUM_ROWS; row++)
+            {
+                p_moves = GAME_gen_moves_from_sq(p_board, SQ_FROM_FILE_RANK(file,rank));
+                if (p_moves == NULL)
+                {
+                        free(p_moves);
+                        continue;
+                }
+
+                count = 0;
+                while (p_moves[count] != GAME_MOVE_VERDICT_ILLEGAL)
+                {
+                    GAME_make_move(p_board, p_moves[count].move);
+                    tmp_v =  _AI_minimax(p_board, depth – 1, a, b, current_player));
+
+                    if (v.score > tmp_v.score)
+                    {
+                        v.score = tmp_v.score;
+                        v.move = tmp_v.move;
+                    }
+
+                    b = MIN(b, v.score);
+
+                    if (b <= a) 
+                    {
+                            break; /* cut-off */
+                    }
+                    count++;
+                }
+                free(p_moves);
+            }
+        }
+
+        return v;
+    }
+}
+
 MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_board, AI_DIFFICULTY_E a_difficulty)
 {
     assert(a_difficulty != AI_DIFFICULTY_EXPERT);
