@@ -110,7 +110,7 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
         .can_promote_to = TRUE
     },
     {   // QUEEN
-        .type           = PIECE_TYPE_EMPTY,
+        .type           = PIECE_TYPE_QUEEN,
         .value          = 9,
         .letters        = { 'Q', 'q'},
         .offsets        = { SQ_UP(0),
@@ -127,8 +127,8 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
         .can_promote_to = TRUE
     },
     {   // KING
-        .type           = PIECE_TYPE_EMPTY,
-        .value          = 400,
+        .type           = PIECE_TYPE_KING,
+        .value          = 100,
         .letters        = { 'K', 'k'},
         .offsets        = { SQ_UP(0),
                             SQ_RIGHT(0),

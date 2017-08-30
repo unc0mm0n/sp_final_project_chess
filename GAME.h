@@ -53,6 +53,7 @@ typedef enum GAME_SPECIAL_BM_S
  */
 typedef enum GAME_MOVE_VERDICT_S
 {
+    GAME_MOVE_VERDICT_NONE,
     GAME_MOVE_VERDICT_LEGAL,
     GAME_MOVE_VERDICT_ILLEGAL_SQUARE,   // original square is illegal.
     GAME_MOVE_VERDICT_NO_PIECE,          // there is no piece (of the current player's color) in the original square

@@ -10,14 +10,14 @@
 #include "GAME.h"
 #include "MANAGER.h"
 
-#define AI_MAX_SCORE 10000;
-#define AI_MIN_SCORE (-AI_MAX_SCORE);
+#define AI_MAX_SCORE (10000)
+#define AI_MIN_SCORE (-AI_MAX_SCORE)
 /**
  * Enum of available AI difficulties
  */
 typedef enum AI_DIFFICULTY_S
 {
-    AI_DIFFICULTY_NOOB,
+    AI_DIFFICULTY_NOOB = 1,
     AI_DIFFICULTY_EASY,
     AI_DIFFICULTY_MODERATE,
     AI_DIFFICULTY_HARD,

@@ -123,7 +123,7 @@ typedef struct  MANAGER_agent_play_command_response_s
         GAME_move_result_t     move_result;    // MOVE command
         GAME_move_analysis_t * possible_moves; // GET_MOVES command
         BOOL                   save_succesful; // SAVE command
-        GAME_move_analysis_t * undone_moves;   // UNDO command
+        GAME_move_analysis_t   undone_move;   // UNDO command
     } output;
 } MANAGER_agent_play_command_response_t;
 

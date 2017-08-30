@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "CLI.h"
 
@@ -33,7 +34,19 @@ MANAGER_play_agent_t CLI_get_play_agent()
 
 void CLI_print_board(const GAME_board_t* p_a_board)
 {
+    /* debug color print * /
     printf("\n");
+    for (int i=NUM_RANKS-1; i >= 0; i--)                                                                      
+    {                                                                                                         
+        for (int j=0; j < NUM_RANKS; j++)                                                                     
+        {                                                                                                     
+            printf("%d ", p_a_board->colors[ SQ_FROM_FILE_RANK(j,i)]);                           
+        }                                                                                                     
+        printf("\n");                                                                                         
+    }                                                                                                         
+    printf("\n");
+    */
+
     for (int i=NUM_RANKS-1; i >= 0; i--)                                                                      
     {                                                                                                         
         for (int j=0; j < NUM_RANKS; j++)                                                                     
@@ -73,7 +86,7 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t* p_a_boa
     // ugly hack for easy testing
     if (move_digits == 0)
     {
-        command.type = MANAGER_PLAY_COMMAND_TYPE_QUIT;
+        command.type = MANAGER_PLAY_COMMAND_TYPE_UNDO;
         return command;
     }
     move.from = SQ_FROM_FILE_RANK(move_digits / 1000 - 1, move_digits / 100 % 10 - 1);
@@ -111,13 +124,25 @@ void CLI_handle_settings_command_response(MANAGER_agent_settings_command_t comma
 void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response)
 {
     assert (command.type >= 0);
-    if (response.has_output && response.output.move_result.played)
+    
+    if (response.has_output)
     {
         gs_board_printed = FALSE;
     }
     if (response.has_output)
     {
-        printf("response: from %x to %x verdict %d\n", response.output.move_result.move_analysis.move.from, response.output.move_result.move_analysis.move.to, response.output.move_result.move_analysis.verdict);
+     //   printf("response: from %x to %x verdict %d\n", response.output.move_result.move_analysis.move.from, response.output.move_result.move_analysis.move.to, response.output.move_result.move_analysis.verdict);
     }
+}
+
+void CLI_sq_to_string(square sq, char output[3])
+{
+
+    char file = SQ_TO_FILE(sq);
+    char rank = SQ_TO_RANK(sq);
+    
+    output[0] = file + 'A';
+    output[1] = rank + '1';
+    output[2] = '\0';
 }
  
