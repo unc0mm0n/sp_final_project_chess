@@ -47,7 +47,7 @@ void _MANAGER_handle_settings(MANAGER_managed_game_t* p_a_manager)
 void _MANAGER_handle_pre_play(MANAGER_managed_game_t* p_a_manager)
 {
     /*TODO: implement this, for now we just start a two player game*/
-    p_a_manager->play_agents[WHITE] = AI_get_play_agent(p_a_manager->p_settings->difficulty);
+    p_a_manager->play_agents[WHITE] = p_a_manager->settings_agent.get_play_agent();
     p_a_manager->play_agents[BLACK] = p_a_manager->settings_agent.get_play_agent();
     p_a_manager->state          = MANAGER_STATE_PLAY;
 }
@@ -69,23 +69,21 @@ void _MANAGER_handle_play(MANAGER_managed_game_t* p_a_manager)
     case MANAGER_PLAY_COMMAND_TYPE_MOVE: // attempt to make move and notify results   
         /* DEBUG PRINTS*/
         printf("square: from %x, to %x, promote %d\n", command.data.move.from, command.data.move.to, command.data.move.promote);
-        GAME_move_analysis_t lm = p_a_manager->p_board->history[p_a_manager->p_board->turn-1].move;
-        printf("special_bm: %x castle_bm_w: %x castle_bm_b: %x ep: %x turn:%d \n", lm.special_bm, p_a_manager->p_board->castle_bm[WHITE], p_a_manager->p_board->castle_bm[BLACK], p_a_manager->p_board->ep, p_a_manager->p_board->turn);
+        if (p_a_manager->p_board->turn > 1)
+        {
+            GAME_move_analysis_t lm = p_a_manager->p_board->history[p_a_manager->p_board->turn-1].move;
+            printf("special_bm: %x castle_bm_w: %x castle_bm_b: %x ep: %x turn:%d \n", lm.special_bm, p_a_manager->p_board->castle_bm[WHITE], p_a_manager->p_board->castle_bm[BLACK], p_a_manager->p_board->ep, p_a_manager->p_board->turn);
+        }
         printf("current player %d\n", GAME_current_player(p_a_manager->p_board));
         /* END DEBUG PRINTS*/
 
         move_result = GAME_make_move(p_a_manager->p_board, command.data.move);
-        while (!move_result.played && move_result.move_analysis.verdict == GAME_MOVE_VERDICT_ILLEGAL_PROMOTION) 
-        {
-            PIECE_TYPE_E piece = p_a_manager->play_agents[game_current_player].prompt_promote_piece(p_a_manager->p_board, move_result);
-            command.data.move.promote = piece;
-            move_result = GAME_make_move(p_a_manager->p_board, command.data.move);
-        }
 
         response.output.move_result = move_result; 
         response.has_output = TRUE;
         break;
     case MANAGER_PLAY_COMMAND_TYPE_QUIT: // change to quit state
+        printf("Quitting...\n");
         p_a_manager->state = MANAGER_STATE_QUIT;
         break;
     default:

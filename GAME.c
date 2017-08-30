@@ -79,13 +79,13 @@ BOOL _GAME_is_allowed_piece_movement(const GAME_board_t* p_a_board, GAME_move_t 
             return FALSE; // We have checked all piece offsets and haven't found a match.
         }
 
-        square tmp = a_move.to; // currently looked at square.
+        square tmp = a_move.from; // currently looked at square.
         int offset = piece_desc.offsets[i]; // offset to move the piece at each step.
 
         tmp += offset;
         while (SQ_IS_LEGAL(tmp)) 
         {
-            if (tmp == a_move.from)
+            if (tmp == a_move.to)
             {
                 return TRUE;        // We have found a move sequence leading to the destination.
             }
@@ -100,7 +100,6 @@ BOOL _GAME_is_allowed_piece_movement(const GAME_board_t* p_a_board, GAME_move_t 
 
             tmp += offset;
         }
-
     }
 
     return FALSE;
@@ -122,7 +121,7 @@ BOOL _GAME_no_moves(const GAME_board_t * p_a_board)
 
             if (p_moves != NULL)
             {
-                if (p_moves[0].valid)
+                if (p_moves[0].verdict == GAME_MOVE_VERDICT_LEGAL)
                 {
                     free(p_moves);
                     GAME_free_board(p_test_board);
@@ -197,16 +196,15 @@ GAME_move_analysis_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_mo
 
     GAME_move_analysis_t move_analysis;
     
-    move_analysis.valid = TRUE;
     move_analysis.special_bm = 0;
     move_analysis.move = a_move;
     move_analysis.verdict = GAME_MOVE_VERDICT_LEGAL;
 
     //printf("analyzing: %d %d %d %d\n", player, a_move.from, a_move.to, p_a_board->colors[a_move.from]);
 
-    PRUNE(!SQ_IS_LEGAL(a_move.from), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_SQUARE) // from square not on board.
-    PRUNE(p_a_board->colors[a_move.from], move_analysis, GAME_MOVE_VERDICT_NO_PIECE) // empty or opponent piece
-
+    PRUNE(SQ_IS_LEGAL(a_move.from), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_SQUARE) // from square not on board.
+    PRUNE((p_a_board->colors[a_move.from] == GAME_current_player(p_a_board)), move_analysis, GAME_MOVE_VERDICT_NO_PIECE) // empty or opponent piece
+    PRUNE(SQ_IS_LEGAL(a_move.to), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_MOVE); // if to square is invalid, it's an illegal move.
     BOOL is_capture = (p_a_board->colors[a_move.to] == OTHER_COLOR(player));
     PRUNE_ILLEGAL(p_a_board->colors[a_move.to] != player, move_analysis)  // can never more to a space occupied by own piece
 
@@ -239,7 +237,7 @@ GAME_move_analysis_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_mo
 
         if (SQ_TO_RANK(a_move.to) == LAST_RANK(player)) // promotion
         {
-            PRUNE_ILLEGAL(PIECE_desc_lut[a_move.promote].can_promote_to, move_analysis);
+            PRUNE(PIECE_desc_lut[a_move.promote].can_promote_to, move_analysis, GAME_MOVE_VERDICT_ILLEGAL_PROMOTION);
 
             move_analysis.special_bm |= GAME_SPECIAL_PROMOTE;
         }
@@ -433,8 +431,9 @@ GAME_move_result_t GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
     GAME_move_result_t result;
     result.played = TRUE;
 
-    result.move_analysis = _GAME_analayze_move(p_a_board, a_move); 
-    if (!result.move_analysis.verdict == GAME_MOVE_VERDICT_LEGAL)
+    result.move_analysis = _GAME_analayze_move(p_a_board, a_move);
+    // We check if the move was legal, or if the only issue was an illegal promotion.
+    if (!(result.move_analysis.verdict == GAME_MOVE_VERDICT_LEGAL))
     {
         result.played = FALSE;
         return result;
@@ -535,7 +534,7 @@ GAME_move_result_t GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
     p_a_board->colors[result.move_analysis.move.to] = player;
     p_a_board->colors[result.move_analysis.move.from] = NO_COLOR;
 
-    if (move_analysis.special_bm & GAME_SPECIAL_PROMOTE) // if promotion switch to promoted piece
+    if (result.move_analysis.special_bm & GAME_SPECIAL_PROMOTE) // if promotion switch to promoted piece
     {
         p_a_board->pieces[result.move_analysis.move.to] = result.move_analysis.move.promote; 
     }
@@ -550,10 +549,12 @@ GAME_move_result_t GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
         if (player == WHITE)
         {
             p_a_board->pieces[SQ_DOWN(result.move_analysis.move.to)] = PIECE_TYPE_EMPTY;
+            p_a_board->colors[SQ_DOWN(result.move_analysis.move.to)] = NO_COLOR;
         }
         else
         {
             p_a_board->pieces[SQ_UP(result.move_analysis.move.to)] = PIECE_TYPE_EMPTY;
+            p_a_board->colors[SQ_UP(result.move_analysis.move.to)] = NO_COLOR;
         }
     }
 
@@ -562,7 +563,7 @@ GAME_move_result_t GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
     {
         GAME_undo_move(p_a_board); // All this was for naught.
         result.played = FALSE;
-        result.move_analysis.verdict = GAME_MOVE_VERDICT_KING_THREATENED; 
+        result.move_analysis.verdict = GAME_MOVE_VERDICT_KING_THREATENED;
         return result;
     }
 
@@ -570,8 +571,6 @@ GAME_move_result_t GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
     BOOL is_check = GAME_is_checked(p_a_board, OTHER_COLOR(player));
     p_a_board->history[p_a_board->turn - 1].move.special_bm |= GAME_SPECIAL_CHECK * is_check; 
     p_a_board->history[p_a_board->turn - 1].move.special_bm |= GAME_SPECIAL_UNDER_ATTACK * GAME_is_attacking(p_a_board, OTHER_COLOR(player), a_move.to);
-
-    result.type = GAME_MOVE_VERDICT_LEGAL;
     return result;
 }
 
@@ -579,7 +578,7 @@ GAME_move_analysis_t GAME_undo_move(GAME_board_t * p_a_board)
 {
     /* this is really similar to a normal move, but in reverse and without legality checking. */
     p_a_board->turn--;  // update turn
-    GAME_history_t hist = p_a_board->history[p_a_board->turn]; // fetch history
+    GAME_history_t hist = p_a_board->history[p_a_board->turn % GAME_HISTORY_SIZE]; // fetch history
     
     // update parameters
     memcpy(p_a_board->castle_bm, hist.castle_bm, sizeof(p_a_board->castle_bm));
@@ -692,14 +691,14 @@ GAME_move_analysis_t* GAME_gen_moves_from_sq(GAME_board_t* p_a_board, square a_f
         return NULL;
     }
 
-    GAME_move_analysis_t* p_moves = (GAME_move_analysis_t *)calloc(GAME_MAX_POSSIBLE_MOVES, sizeof(GAME_move_analysis_t));
+    GAME_move_analysis_t* p_moves = (GAME_move_analysis_t *)malloc(sizeof(GAME_move_analysis_t) * GAME_MAX_POSSIBLE_MOVES);
     int count = 0;
     for (int rank=0; rank < NUM_RANKS; rank++)
     {
         for (int file=0; file < NUM_FILES; file++)
         {
             GAME_move_t move = {.from = a_from, .to=SQ_FROM_FILE_RANK(file, rank), .promote=PIECE_TYPE_EMPTY};
-            GAME_move_result_t move_res = GAME_make_move(p_a_board, move); 
+            GAME_move_result_t move_res = GAME_make_move(p_a_board, move);
             if (move_res.played) 
             {
                 // a succesfull move was made. Undo and remember it.
@@ -729,6 +728,7 @@ GAME_move_analysis_t* GAME_gen_moves_from_sq(GAME_board_t* p_a_board, square a_f
             }
         }
     }
+    p_moves[count].verdict = GAME_MOVE_VERDICT_ILLEGAL_MOVE;
     return p_moves;
 }
 

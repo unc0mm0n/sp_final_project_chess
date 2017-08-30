@@ -1,6 +1,7 @@
-#include <time.h>
+#include <time.h> // temp
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h> // temp
 
 #include "AI.h"
 #include "PIECE.h"
@@ -28,6 +29,7 @@ MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_boa
 
     if (GAME_get_result(p_a_board) != GAME_RESULT_PLAYING)
     {
+        printf("GAME RESULT: %d\n", GAME_get_result(p_a_board));
         command.type = MANAGER_PLAY_COMMAND_TYPE_QUIT;
         free(p_board_copy);
         return command;
@@ -45,7 +47,7 @@ MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_boa
                 if (p_moves != NULL)
                 {
                     tmp = p_moves;
-                    while(tmp->valid == TRUE)
+                    while(tmp->verdict == GAME_MOVE_VERDICT_LEGAL)
                     {
                         if (rand() < RAND_MAX / 10)
                         {
