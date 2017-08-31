@@ -18,6 +18,7 @@
 #define GAME_MAX_POSSIBLE_MOVES (65)   // Maximum possible moves of a theoretical piece + sentinel
 
 #define GAME_NO_EP              ((square) 0x88) // value which cannot pass SQUARE_IS_LEGAL for no ep
+#define GAME_NO_SQUARE          ((square) 0x88)
 
 // Disable castle c in bitmask bm
 #define DISABLE_CASTLE(bm, c)   ((bm) &(~ (c)))
@@ -92,7 +93,9 @@ typedef struct GAME_move_s
 typedef struct GAME_move_analysis_s
 {
     GAME_MOVE_VERDICT_E verdict;    // is move a valid piece move (not necesserily legal)
-    GAME_move_t move;               // move that was played
+    GAME_move_t  move;               // move that was played
+    COLOR        color;
+    PIECE_TYPE_E piece;             // the piece that moved
     PIECE_TYPE_E capture;           // piece that was captured
     int special_bm;                 // Bitmask indicating special behaviour (see GAME_SPECIAL_BM_E)
 

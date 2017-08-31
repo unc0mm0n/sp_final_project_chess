@@ -12,6 +12,8 @@
 #include "GAME.h"
 #include "SETTINGS.h"
 
+#define MANAGER_UNDO_COUNT (6) // number of half moves undone
+
 /**
  * Possible states for the manager
  */
@@ -53,6 +55,15 @@ typedef enum MANAGER_PLAY_COMMAND_TYPE_S
 } MANAGER_PLAY_COMMAND_TYPE_E;
 
 /**
+ * Result of manager command undo
+ */
+typedef enum MANAGER_UNDO_RESULT_S
+{
+    MANAGER_UNDO_RESULT_SUCCESS,
+    MANAGER_UNDO_RESULT_FAIL_TWO_PLAYERS,
+    MANAGER_UNDO_RESULT_FAIL_NO_HISTORY
+} MANAGER_UNDO_RESULT_E;
+/**
  * A single agent settings command, used by the manager.
  */
 typedef struct MANAGER_agent_settings_command_s
@@ -68,10 +79,7 @@ typedef struct MANAGER_agent_settings_command_s
        } change_setting;
 
        // LOAD command requires file to attempt to load
-       struct {
-           char * name;
-           int length;
-       } filename;
+       char*  filename;
     } data;
 } MANAGER_agent_settings_command_t;
 
@@ -122,10 +130,16 @@ typedef struct  MANAGER_agent_play_command_response_s
 {
     BOOL has_output;      // TRUE if the command has output (which should be distinguishable by command type).
     union {
-        GAME_move_result_t     move_result;    // MOVE command
+        struct { // MOVE command
+            GAME_move_result_t     move_result;
+            GAME_RESULT_E          game_result;    
+        } move_data;
         GAME_move_analysis_t * possible_moves; // GET_MOVES command
-        BOOL                   save_succesful; // SAVE command
-        GAME_move_analysis_t   undone_move;   // UNDO command
+        BOOL            save_succesful; // SAVE command
+        struct {
+            MANAGER_UNDO_RESULT_E      undo_result;
+            GAME_move_analysis_t    undone_moves[2];   // UNDO command
+        } undo_data;
     } output;
 } MANAGER_agent_play_command_response_t;
 
@@ -167,6 +181,7 @@ typedef struct MANAGER_managed_game_s
     SETTINGS_settings_t* p_settings;          // settings used in the game
     MANAGER_settings_agent_t settings_agent;           // agent used in settings state
     MANAGER_play_agent_t play_agents[NUM_PLAYERS]; // agent BLACK and agent WHITE will be called respectively
+    int undo_count;                                // how many undos are available.
 
 } MANAGER_managed_game_t;
 

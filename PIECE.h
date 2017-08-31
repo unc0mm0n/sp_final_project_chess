@@ -36,6 +36,7 @@ typedef enum PIECE_TYPE_S
 typedef struct PIECE_desc_s
 {
     PIECE_TYPE_E    type;                           // piece type
+    char*           name;
     int             value;                          // Value of AI evaluation [YVW TODO: Maybe move to AI]
     char            letters[NUM_PLAYERS];           // letters per color      [YVW TODO: Maybe move to CLI]
     int             offsets[PIECE_MAX_OFFSETS];     // possible move offsets + sentinel value 0.
@@ -52,6 +53,7 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
 {
     {   // EMTPY SPACE
         .type           = PIECE_TYPE_EMPTY,
+        .name           = "empty",
         .value          = -1,
         .letters        = { '_', '_'},
         .offsets        = {PIECE_OFFSET_SENTINEL},
@@ -60,14 +62,16 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
     },
     {   // PAWN
         .type           = PIECE_TYPE_PAWN,
+        .name           = "pawn",
         .value          = 1,
         .letters        = { 'M', 'm'},
         .offsets        = {PIECE_OFFSET_SENTINEL},              // pawns are handled individually
         .slides         = FALSE,
-        .can_promote_to = FALSE
+        .can_promote_to = TRUE
     },
     {   // KNIGHT
         .type           = PIECE_TYPE_KNIGHT,
+        .name           = "knight",
         .value          = 3,
         .letters        = { 'N', 'n'},
         .offsets        = { SQ_UP(SQ_UP(SQ_LEFT(0))),
@@ -85,6 +89,7 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
     },
     {   // BISHOP
         .type           = PIECE_TYPE_BISHOP,
+        .name           = "bishop",
         .value          = 3,
         .letters        = { 'B', 'b'},
         .offsets        = { SQ_UP(SQ_LEFT(0)),
@@ -98,6 +103,7 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
     },
     {   // ROOK
         .type           = PIECE_TYPE_ROOK,
+        .name           = "rook",
         .value          = 5,
         .letters        = { 'R', 'r'},
         .offsets        = { SQ_UP(0),
@@ -111,6 +117,7 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
     },
     {   // QUEEN
         .type           = PIECE_TYPE_QUEEN,
+        .name           = "queen",
         .value          = 9,
         .letters        = { 'Q', 'q'},
         .offsets        = { SQ_UP(0),
@@ -128,6 +135,7 @@ static const PIECE_desc_t PIECE_desc_lut[PIECE_TYPE_MAX] =
     },
     {   // KING
         .type           = PIECE_TYPE_KING,
+        .name           = "king",
         .value          = 100,
         .letters        = { 'K', 'k'},
         .offsets        = { SQ_UP(0),

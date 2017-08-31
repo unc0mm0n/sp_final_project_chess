@@ -10,7 +10,7 @@
 #include "CLI.h"
 
 
-static int gs_calcs;
+static BOOL gs_print = TRUE; // if TRUE, will print moves.
 
 /* sadly in C we don't have partial functions, so we have 5 different agents.
  * On the bright side this is a better way to do this if we would ever want to increase
@@ -61,7 +61,6 @@ int _AI_calculate_score_heuristic(const GAME_board_t* p_board, COLOR max_player)
         }
 
     }
-    gs_calcs++;
     //    printf("\n================== score for ==================\n");
     //    CLI_print_board(p_board);
     //    printf("==================== %d =======================\n\n", score);
@@ -82,12 +81,6 @@ AI_move_score_t _AI_minimax(GAME_board_t* p_board, int depth, int a, int b)
     if (depth == 0 || GAME_get_result(p_board) != GAME_RESULT_PLAYING)
     {
         v.score = _AI_calculate_score_heuristic(p_board, GAME_current_player(p_board));
-        //printf("%d", depth);
-        //for (int i=0; i < 3 - depth; i++)
-        //{
-        //   printf(">");
-        //}
-        //printf("\tscore %d \n", v.score);
         return v;
     }
     v.score = AI_MIN_SCORE;
@@ -95,28 +88,15 @@ AI_move_score_t _AI_minimax(GAME_board_t* p_board, int depth, int a, int b)
     {
         for (int row = 0; row < NUM_RANKS; row++)
         {
-            //printf("file %d, rank %d\n", file, row);
             p_moves = GAME_gen_moves_from_sq(p_board, SQ_FROM_FILE_RANK(file,row));
             if (p_moves == NULL)
             {
-                //printf("skipped\n");
                 continue;
             }
 
             count = 0;
             while (p_moves[count].verdict == GAME_MOVE_VERDICT_LEGAL)
             {
-                //printf("%d", depth);
-                //for (int i=0; i < 3-depth; i++)
-                //{
-                //    printf(">");
-                //}
-                //char from_str[3], to_str[3];
-                //CLI_sq_to_string(p_moves[count].move.from, from_str);
-                //CLI_sq_to_string(p_moves[count].move.to, to_str);
-                //printf("\tCurrent player %d ", p_board->turn);
-                //printf("%d  ... ", GAME_current_player(p_board));
-                //printf("from %s to %s %x %x\n", from_str, to_str, p_moves[count].move.from, p_moves[count].move.to);
                 assert(GAME_make_move(p_board, p_moves[count].move).played); // moves from gen move should be legal;
                 tmp_v =  _AI_minimax(p_board, depth - 1, -b, -a);
                 GAME_undo_move(p_board);
@@ -130,7 +110,6 @@ AI_move_score_t _AI_minimax(GAME_board_t* p_board, int depth, int a, int b)
 
                 if (b <= a) 
                 {
-                    //printf("pruned\n");
                     pruned = TRUE;
                     break; /* cut-off */
                 }
@@ -161,20 +140,7 @@ MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_boa
 
     command.type = MANAGER_PLAY_COMMAND_TYPE_MOVE;
 
-    if (GAME_get_result(p_a_board) != GAME_RESULT_PLAYING || p_a_board->turn >= 200)
-    {
-        //printf("GAME RESULT: %d\n", GAME_get_result(p_a_board));
-        command.type = MANAGER_PLAY_COMMAND_TYPE_QUIT;
-        free(p_board_copy);
-        return command;
-    }
-    printf("\n");
-    CLI_print_board(p_a_board);
-    gs_calcs = 0;
-    //CLI_print_board(p_a_board);
     move_score = _AI_minimax(p_board_copy, a_difficulty, AI_MIN_SCORE, AI_MAX_SCORE);
-    printf("move score: %d\n", move_score.score);
-    printf("Move score: %d Terminal positions: %d\n", move_score.score, gs_calcs);
     command.data.move = move_score.move;
     GAME_free_board(p_board_copy);
     return command;
@@ -210,8 +176,38 @@ MANAGER_agent_play_command_t _AI_prompt_play_command_expert(const GAME_board_t* 
 
 void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response)
 {
-    assert(command.type == MANAGER_PLAY_COMMAND_TYPE_MOVE || command.type == MANAGER_PLAY_COMMAND_TYPE_QUIT);
-    assert(!response.has_output || response.output.move_result.move_analysis.verdict == GAME_MOVE_VERDICT_LEGAL); // computer must make legal moves
+    assert(command.type == MANAGER_PLAY_COMMAND_TYPE_MOVE);
+    assert(response.output.move_data.move_result.played); // computer must make legal moves
+    if (gs_print)
+    {
+        char from_str[6], to_str[6];
+        square from = response.output.move_data.move_result.move_analysis.move.from;
+        square to = response.output.move_data.move_result.move_analysis.move.to;
+
+        CLI_sq_to_str(from, from_str);
+        CLI_sq_to_str(to, to_str);
+
+        char* name = PIECE_desc_lut[response.output.move_data.move_result.move_analysis.piece].name;
+        printf("Computer: move %s at %s to %s\n", name, from_str, to_str);
+        switch( response.output.move_data.game_result)
+        {
+            case GAME_RESULT_DRAW:
+                printf("The game ends in a tie\n");
+                break;
+            case GAME_RESULT_BLACK_WINS:
+                printf("Checkmate! black player wins the game\n");
+                break;
+            case GAME_RESULT_WHITE_WINS:
+                printf("Checkmate! white player wins the game\n");
+                break;
+            default:
+                if ((response.output.move_data.move_result.move_analysis.special_bm & GAME_SPECIAL_CHECK) > 0)
+                {
+                    printf("Check!\n");
+                }
+                break;
+        }
+    }
     return;
 }
 

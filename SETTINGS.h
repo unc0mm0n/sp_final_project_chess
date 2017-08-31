@@ -30,8 +30,10 @@ typedef enum SETTINGS_CHANGE_RESULT_S
 {
     SETTINGS_CHANGE_RESULT_SUCCESS,
     SETTINGS_CHANGE_RESULT_WRONG_MODE,          // For attempting to set arguments in wrong game mode
-    SETTINGS_CHANGE_RESULT_INVALID_ARGUMENT,    // For invalid settings argument   
-    SETTINGS_CHANGE_RESULT_NOT_SUPPORTED        // For settings that should be valid but are not supported
+    SETTINGS_CHANGE_RESULT_NOT_SUPPORTED,       // For settings that should be valid but are not supported
+    SETTINGS_CHANGE_RESULT_INVALID_MODE,
+    SETTINGS_CHANGE_RESULT_INVALID_COLOR,       // For invalid settings color argument   
+    SETTINGS_CHANGE_RESULT_INVALID_DIFFICULTY   // For invalid settings difficulty argument   
 
 } SETTINGS_CHANGE_RESULT_E;
 
@@ -80,6 +82,14 @@ void SETTINGS_free_settings(SETTINGS_settings_t* p_a_settings);
  * @return SETTINGS_CHANGE_RESULT_E 
  */
 SETTINGS_CHANGE_RESULT_E SETTINGS_change_setting(SETTINGS_settings_t* p_a_settings, SETTINGS_SETTING_E a_setting, int a_new_value);
+
+/**
+ * reset settings back to default.
+ *
+ * @param p_a_settings pointer to location to change settings
+ * 
+ */
+void SETTINGS_reset_settings(SETTINGS_settings_t* p_a_settings);
 
 #endif /*SETTINGS_IMP*/
 

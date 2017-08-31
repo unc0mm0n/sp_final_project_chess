@@ -67,6 +67,7 @@ typedef uint8_t square; // bits 0-3 bits indicate the file and bits 4-6 indicate
 #define IS_WHITE_PAWN_RANK(sq) SQ_IS_RANK(sq, WHITE_PAWN_RANK)      // Test that is the rank                                             
 #define BLACK_PAWN_RANK        (NUM_RANKS - 2)                      // Rank in which black pawns start
 #define IS_BLACK_PAWN_RANK(sq) SQ_IS_RANK(sq, BLACK_PAWN_RANK)      // Test that is the rank
+#define PAWN_RANK(c)       ((c) == WHITE ? WHITE_PAWN_RANK : BLACK_PAWN_RANK);
 #define IS_PAWN_RANK(c, sq)    ((c) == WHITE ? IS_WHITE_PAWN_RANK(sq) : IS_BLACK_PAWN_RANK(sq))
 
 /* Important squares (piece rows, mostly for castling tests) */                                          

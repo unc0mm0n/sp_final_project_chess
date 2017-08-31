@@ -209,7 +209,9 @@ GAME_move_analysis_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_mo
     PRUNE(SQ_IS_LEGAL(a_move.to), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_MOVE); // if to square is invalid, it's an illegal move.
     BOOL is_capture = (p_a_board->colors[a_move.to] == OTHER_COLOR(player));
     PRUNE_ILLEGAL(p_a_board->colors[a_move.to] != player, move_analysis)  // can never more to a space occupied by own piece
-
+    
+    move_analysis.piece = p_a_board->pieces[a_move.from];
+    move_analysis.color = p_a_board->colors[a_move.from];
     if (p_a_board->pieces[a_move.from] == PIECE_TYPE_PAWN) // Pawns get special treatment
     {
         BOOL is_move;
@@ -573,6 +575,8 @@ GAME_move_result_t GAME_make_move(GAME_board_t * p_a_board, GAME_move_t a_move)
     BOOL is_check = GAME_is_checked(p_a_board, OTHER_COLOR(player));
     p_a_board->history[p_a_board->turn - 1].move.special_bm |= GAME_SPECIAL_CHECK * is_check; 
     p_a_board->history[p_a_board->turn - 1].move.special_bm |= GAME_SPECIAL_UNDER_ATTACK * GAME_is_attacking(p_a_board, OTHER_COLOR(player), a_move.to);
+    result.move_analysis.special_bm |= GAME_SPECIAL_CHECK * is_check; 
+    result.move_analysis.special_bm |= GAME_SPECIAL_UNDER_ATTACK * GAME_is_attacking(p_a_board, OTHER_COLOR(player), a_move.to);
     return result;
 }
 

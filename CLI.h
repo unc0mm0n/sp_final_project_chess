@@ -62,6 +62,6 @@ void CLI_handle_settings_command_response(MANAGER_agent_settings_command_t comma
  */
 void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response);
 
-void CLI_sq_to_string(square sq, char output[3]);
+void CLI_sq_to_str(square sq, char output[6]);
 
 #endif /* CLI_IMP */
