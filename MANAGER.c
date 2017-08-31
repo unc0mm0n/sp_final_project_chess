@@ -47,10 +47,10 @@ void _MANAGER_handle_settings(MANAGER_managed_game_t* p_a_manager)
 void _MANAGER_handle_pre_play(MANAGER_managed_game_t* p_a_manager)
 {
     /*TODO: implement this, for now we just start a two player game*/
-    //p_a_manager->play_agents[WHITE] = AI_get_play_agent(3);
-    p_a_manager->play_agents[BLACK] = AI_get_play_agent(AI_DIFFICULTY_EXPERT);
-    p_a_manager->play_agents[WHITE] = p_a_manager->settings_agent.get_play_agent();
-    //p_a_manager->play_agents[BLACK] = p_a_manager->settings_agent.get_play_agent();
+    p_a_manager->play_agents[WHITE] = AI_get_play_agent(4);
+    //p_a_manager->play_agents[BLACK] = AI_get_play_agent(2);
+    //p_a_manager->play_agents[WHITE] = p_a_manager->settings_agent.get_play_agent();
+    p_a_manager->play_agents[BLACK] = p_a_manager->settings_agent.get_play_agent();
     p_a_manager->state          = MANAGER_STATE_PLAY;
 }
 

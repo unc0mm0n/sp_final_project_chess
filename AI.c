@@ -19,6 +19,20 @@ static int gs_calcs;
 
 int _AI_calculate_score_heuristic(const GAME_board_t* p_board, COLOR max_player)
 {
+    GAME_RESULT_E result = GAME_get_result(p_board);
+
+    switch (result)
+    {
+        case GAME_RESULT_PLAYING:
+            break;
+        case GAME_RESULT_WHITE_WINS:
+            return (max_player == WHITE ? AI_MAX_SCORE - 1 : AI_MIN_SCORE + 1);
+        case GAME_RESULT_BLACK_WINS:
+            return (max_player == BLACK ? AI_MAX_SCORE - 1 : AI_MIN_SCORE + 1);
+        case GAME_RESULT_DRAW:
+            return 0;
+    }
+
     int score = 0;
     int counter = 0;
     for (int file = 0; file < NUM_FILES; file++)
@@ -159,7 +173,8 @@ MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_boa
     gs_calcs = 0;
     //CLI_print_board(p_a_board);
     move_score = _AI_minimax(p_board_copy, a_difficulty, AI_MIN_SCORE, AI_MAX_SCORE);
-    //printf("Move score: %d Terminal positions: %d\n", move_score.score, gs_calcs);
+    printf("move score: %d\n", move_score.score);
+    printf("Move score: %d Terminal positions: %d\n", move_score.score, gs_calcs);
     command.data.move = move_score.move;
     GAME_free_board(p_board_copy);
     return command;
@@ -190,7 +205,7 @@ MANAGER_agent_play_command_t _AI_prompt_play_command_hard(const GAME_board_t* p_
 
 MANAGER_agent_play_command_t _AI_prompt_play_command_expert(const GAME_board_t* p_board)
 {
-    return _AI_prompt_play_command(p_board, 5);
+    return _AI_prompt_play_command(p_board, 6);
 }
 
 void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response)

@@ -580,6 +580,7 @@ GAME_move_analysis_t GAME_undo_move(GAME_board_t * p_a_board)
 {
     /* this is really similar to a normal move, but in reverse and without legality checking. */
     p_a_board->turn--;  // update turn
+    assert(p_a_board->turn >= 1);
     GAME_history_t hist = p_a_board->history[p_a_board->turn % GAME_HISTORY_SIZE]; // fetch history
     // update parameters
     memcpy(p_a_board->castle_bm, hist.castle_bm, sizeof(p_a_board->castle_bm));
