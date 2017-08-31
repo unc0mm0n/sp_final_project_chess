@@ -27,6 +27,14 @@
 #define WHITE          (1)           // used to indicate the white player.
 #define NUM_PLAYERS    (2)           // number of players in a game of chess.
 
+#define WHITE_STR      ("white")
+#define BLACK_STR      ("black")
+#define COLOR_STR(c)  ((c) == WHITE ? (WHITE_STR) : (BLACK_STR))
+
+#define WHITE_STR_AC      ("WHITE")
+#define BLACK_STR_AC      ("BLACK")
+#define COLOR_STR_AC(c)  ((c) == WHITE ? (WHITE_STR_AC) : (BLACK_STR_AC))
+
 #define IS_COLOR(c)    ((c) == 1 || (c) == 0)       // check if character is color.
 #define OTHER_COLOR(c) (IS_COLOR(c) ? (c) ^ 1 : c)  // flip between BLACK and WHITE, NO_COLOR remains the same
 

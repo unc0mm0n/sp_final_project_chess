@@ -10,7 +10,7 @@
 #include "GAME.h"
 #include "MANAGER.h"
 
-#define AI_MAX_SCORE (10000)
+#define AI_MAX_SCORE (100000)
 #define AI_MIN_SCORE (-AI_MAX_SCORE)
 /**
  * Enum of available AI difficulties
@@ -43,13 +43,11 @@ typedef struct AI_move_score_s
 MANAGER_play_agent_t AI_get_play_agent(AI_DIFFICULTY_E a_difficulty);
 
 /**
- * Search the board for a move to play and return it.
- *
- * @param p_a_board pointer to board.
- * @param depth depth to search for move.
- * @param heuristic a function accepting a board and returning a heuristic value for the board.
- *
- * @return GAME_move_t move chosen by the computer
+ * Set the print value for the ai module.
+ * ai will only print if this is set to TRUE.
+ * is FALSE by default.
+ * @param value new print value
  */
-GAME_move_t AI_search_move(const GAME_board_t* p_a_board, int depth, int (*heuristic)(const GAME_board_t*));
+void AI_set_print(BOOL value);
+
 #endif /*AI_IMP*/

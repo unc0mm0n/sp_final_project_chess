@@ -710,9 +710,9 @@ GAME_move_analysis_t* GAME_gen_moves_from_sq(GAME_board_t* p_a_board, square a_f
     GAME_move_analysis_t* p_moves = (GAME_move_analysis_t *)malloc(sizeof(GAME_move_analysis_t) * GAME_MAX_POSSIBLE_MOVES);
     GAME_move_analysis_t* tmp = p_moves;
     assert(p_moves != NULL);
-    for (int rank=0; rank < NUM_RANKS; rank++)
+    for (int file=0; file < NUM_FILES; rank++)
     {
-        for (int file=0; file < NUM_FILES; file++)
+        for (int rank=0; rank < NUM_RANKS; file++)
         {
             GAME_move_t move = {.from = a_from, .to=SQ_FROM_FILE_RANK(file, rank), .promote=PIECE_TYPE_EMPTY};
             GAME_move_result_t move_res = GAME_make_move(p_a_board, move);

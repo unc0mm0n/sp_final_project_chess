@@ -62,6 +62,14 @@ void CLI_handle_settings_command_response(MANAGER_agent_settings_command_t comma
  */
 void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response);
 
+/**
+ * Convert square to str notation <rank,file> with upper case 
+ * files, which is the same notation used in move input, and 
+ * place it in given buffer. 
+ * 
+ * @param sq 
+ * @param output 
+ */
 void CLI_sq_to_str(square sq, char output[6]);
 
 #endif /* CLI_IMP */

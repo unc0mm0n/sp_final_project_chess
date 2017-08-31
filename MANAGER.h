@@ -47,6 +47,7 @@ typedef enum MANAGER_PLAY_COMMAND_TYPE_S
 {
     MANAGER_PLAY_COMMAND_TYPE_NONE,
     MANAGER_PLAY_COMMAND_TYPE_MOVE,
+    MANAGER_PLAY_COMMAND_TYPE_CASTLE,
     MANAGER_PLAY_COMMAND_TYPE_GET_MOVES,
     MANAGER_PLAY_COMMAND_TYPE_SAVE,
     MANAGER_PLAY_COMMAND_TYPE_UNDO,
@@ -63,6 +64,17 @@ typedef enum MANAGER_UNDO_RESULT_S
     MANAGER_UNDO_RESULT_FAIL_TWO_PLAYERS,
     MANAGER_UNDO_RESULT_FAIL_NO_HISTORY
 } MANAGER_UNDO_RESULT_E;
+
+/**
+ * Result of manager command castle
+ */
+typedef enum MANAGER_CASTLE_RESULT_S
+{
+    MANAGER_CASTLE_RESULT_SUCCESS,
+    MANAGER_CASTLE_RESULT_FAIL_NO_ROOK,
+    MANAGER_CASTLE_RESULT_FAIL
+} MANAGER_UNDO_RESULT_E;
+
 /**
  * A single agent settings command, used by the manager.
  */
@@ -111,6 +123,7 @@ typedef struct MANAGER_agent_play_command_s
        GAME_move_t move;
 
        // GET_MOVES command requires square to get moves for
+       // CASTLE command gives square of the rook
        square sq;
 
        // SAVE acommand requires path of file to save to
@@ -134,12 +147,25 @@ typedef struct  MANAGER_agent_play_command_response_s
             GAME_move_result_t     move_result;
             GAME_RESULT_E          game_result;    
         } move_data;
-        GAME_move_analysis_t * possible_moves; // GET_MOVES command
+
+        struct {  // GET_MOVES command
+            BOOL display_hints;             // true if given the current difficulty hint displaying is advised.
+            COLOR player_color;
+            GAME_move_analysis_t * moves;   // list of possible moves, should be freed manually.
+        } get_moves_data;
+
+        struct {  // CASTLE command
+            MANAGER_CASTLE_RESULT_E castle_result;
+            GAME_move_result_t move;
+        } castle_data;
+
         BOOL            save_succesful; // SAVE command
+
         struct {
             MANAGER_UNDO_RESULT_E      undo_result;
             GAME_move_analysis_t    undone_moves[2];   // UNDO command
         } undo_data;
+
     } output;
 } MANAGER_agent_play_command_response_t;
 
