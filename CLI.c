@@ -4,7 +4,34 @@
 
 #include "CLI.h"
 
+#define MAX_INPUT_SIZE (20)
+#define SPLIT_TOKEN ("\n\t\r ")
+
 static BOOL gs_board_printed; // evil global
+static BOOL gs_settings_intro_printed; // evil global
+static char gs_command_buffer[MAX_INPUT_SIZE]; // holds command
+
+BOOL _CLI_is_int(const char* str) {
+    if (str == NULL) {
+        return 0;
+    }
+    char *p_c = (char *)str;
+    bool has_digits = 0; 
+
+    if (*p_c == '-') { // We only accept p_c at the start.
+        p_c++;
+    }
+
+    while (*p_c != '\0' && *p_c != '\n') { // Make sure all characters are digits
+        if (*p_c < '0' || *p_c > '9') {
+            return 0;
+        }
+
+        p_c++;
+        has_digits++;
+    }
+    return (has_digits > 0); // We want to verify at least one character is a digit.
+}
 
 /* flush a line from STDIN */
 void _CLI_fflush_line()
@@ -15,6 +42,7 @@ void _CLI_fflush_line()
 
 MANAGER_settings_agent_t CLI_get_settings_agent()
 {
+    gs_settings_intro_printed = FALSE;
     MANAGER_settings_agent_t agent;
     agent.prompt_settings_command = CLI_prompt_settings_command;
     agent.handle_settigns_command_response = CLI_handle_settings_command_response;
@@ -47,22 +75,103 @@ void CLI_print_board(const GAME_board_t* p_a_board)
     printf("\n");
     */
 
-    for (int i=NUM_RANKS-1; i >= 0; i--)                                                                      
-    {                                                                                                         
-        for (int j=0; j < NUM_RANKS; j++)                                                                     
+    for (int i = NUM_FILES - 1; i >= 0; i--)                                     
+    {
+        printf("%d| ", i+1);                                                                           
+        for (int j=0; j < NUM_RANKS; j++)
         {                                                                                                     
             printf("%c ", GAME_piece_letter_at(p_a_board, SQ_FROM_FILE_RANK(j,i)));                           
-        }                                                                                                     
-        printf("\n");                                                                                         
-    }                                                                                                         
+        }
+        printf("|\n");
+    }
+    printf("  -----------------\n");
+    printf("    A B C D E F G H\n");
 } 
+
+void CLI_print_settings(const SETTINGS_settings_t* p_settings)
+{
+    if (p_settings->game_mode == 1) 
+    {
+        printf("SETTINGS:\n");
+        printf("GAME_MODE: 1\n");
+    }
+    else
+    {
+        printf("SETTINGS:\n");
+        printf("GAME_MODE: 2\n");
+        printf("DIFFICULTY_LVL: %d\n", p_settings->difficulty);
+        if (p_settings->user_clr == WHITE)
+        {
+            printf("USER_CLR: WHITE\n");
+        }
+        else 
+        {
+            printf("USER_CLR: BLACK\n");
+        }
+    }
+}
 
 MANAGER_agent_settings_command_t CLI_prompt_settings_command(const SETTINGS_settings_t* p_a_settings)
 {
-    /* TODO: tmp to just call game start */
-    assert (p_a_settings->difficulty >= 0);
     MANAGER_agent_settings_command_t command;
-    command.type = MANAGER_SETTINGS_COMMAND_TYPE_START_GAME;
+
+    if (!gs_settings_intro_printed)
+    {
+        printf("Specify game setting or type 'start' to begin a game with the current setting:\n");
+        gs_settings_intro_printed = TRUE;
+    }
+    
+    fgets(gs_command_buffer, MAX_INPUT_SIZE, stdin);
+
+    if (*str == '\n') {
+        command.type = MANAGER_SETTINGS_COMMAND_TYPE_NONE;    
+    }
+    else
+    {
+        token = strtok(gs_command_buffer,SPLIT_TOKEN);
+    }
+
+    if (strcmp(token, "game_mode"))
+    {
+        command.type = MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING;
+        command.data.change_setting.setting = SETTINGS_SETTING_GAME_MODE; 
+        command.data.change_setting.value = atoi(strtok(NULL, SPLIT_TOKEN)); // todo verify integer
+    }
+    else if (strcmp(token, "difficulty"))
+    {
+        command.type = MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING;
+        command.data.change_setting.setting = SETTINGS_SETTING_DIFFICULTY; 
+        command.data.change_setting.value = atoi(strtok(NULL, SPLIT_TOKEN)); // todo verify integer
+    }
+    else if (strcmp(token, "user_color"))
+    {
+        command.type = MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING;
+        command.data.change_setting.setting = SETTINGS_SETTING_USER_COLOR; 
+        command.data.change_setting.value = atoi(strtok(NULL, SPLIT_TOKEN)); // todo verify integer
+    }
+    else if (strcmp(token, "load"))
+    {
+        command.type = MANAGER_SETTINGS_COMMAND_TYPE_LOAD;
+        command.data.filename = strtok(NULL, SPLIT_TOKEN); 
+        assert(0); // not yet implemented
+    }
+    else if (strcmp(token, "default"))
+    {
+        command.type = MANAGER_SETTINGS_COMMAND_TYPE_DEFAULT_SETTINGS; 
+    }
+    else if (strcmp(token, "quit"))
+    {
+        command.type = MANAGER_SETTINGS_COMMAND_TYPE_QUIT; 
+    }
+    else if (strcmp(token, "start"))
+    {
+        command.type = MANAGER_SETTINGS_COMMAND_TYPE_START_GAME; 
+    }
+    else if (strcmp(token, "print_settings"))
+    {
+        _CLI_print_settings(p_a_settings);
+        command.type = MANAGER_SETTINGS_COMMAND_TYPE_NONE; 
+    }
     return command;
 }
 
