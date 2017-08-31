@@ -203,7 +203,7 @@ GAME_move_analysis_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_mo
     move_analysis.verdict = GAME_MOVE_VERDICT_LEGAL;
 
     //printf("analyzing: %d %d %d %d\n", player, a_move.from, a_move.to, p_a_board->colors[a_move.from]);
-
+    PRUNE_ILLEGAL(a_move.to != a_move.from, move_analysis);
     PRUNE(SQ_IS_LEGAL(a_move.from), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_SQUARE) // from square not on board.
     PRUNE((p_a_board->colors[a_move.from] == player), move_analysis, GAME_MOVE_VERDICT_NO_PIECE) // empty or opponent piece
     PRUNE(SQ_IS_LEGAL(a_move.to), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_MOVE); // if to square is invalid, it's an illegal move.
@@ -237,7 +237,7 @@ GAME_move_analysis_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_mo
         }
         
         // make sure diagonal moves are captures and non-diagonal moves are not captures
-        PRUNE_ILLEGAL(!is_capture && (is_move || is_double_move) || (is_diag_move && (is_capture || is_ep)), move_analysis);
+        PRUNE_ILLEGAL(((!is_capture) && (is_move || is_double_move)) || (is_diag_move && (is_capture || is_ep)), move_analysis);
 
         if (SQ_TO_RANK(a_move.to) == LAST_RANK(player)) // promotion
         {
@@ -710,9 +710,9 @@ GAME_move_analysis_t* GAME_gen_moves_from_sq(GAME_board_t* p_a_board, square a_f
     GAME_move_analysis_t* p_moves = (GAME_move_analysis_t *)malloc(sizeof(GAME_move_analysis_t) * GAME_MAX_POSSIBLE_MOVES);
     GAME_move_analysis_t* tmp = p_moves;
     assert(p_moves != NULL);
-    for (int file=0; file < NUM_FILES; rank++)
+    for (int rank=0; rank < NUM_RANKS; rank++)
     {
-        for (int rank=0; rank < NUM_RANKS; file++)
+        for (int file=0; file < NUM_FILES; file++)
         {
             GAME_move_t move = {.from = a_from, .to=SQ_FROM_FILE_RANK(file, rank), .promote=PIECE_TYPE_EMPTY};
             GAME_move_result_t move_res = GAME_make_move(p_a_board, move);
@@ -721,7 +721,6 @@ GAME_move_analysis_t* GAME_gen_moves_from_sq(GAME_board_t* p_a_board, square a_f
                 // a succesfull move was made. Undo and remember it.
                 *tmp = GAME_undo_move(p_a_board);
                 tmp++;
-
             }
             // If the move is a promotion, need to test all possible promotions
             else if (move_res.move_analysis.verdict == GAME_MOVE_VERDICT_ILLEGAL_PROMOTION) 

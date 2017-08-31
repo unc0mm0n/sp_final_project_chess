@@ -139,23 +139,25 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
         response.has_output = TRUE;
         response.output.get_moves_data.display_hints = p_a_manager->p_settings->difficulty <= AI_DIFFICULTY_EASY;
         response.output.get_moves_data.player_color = game_current_player;
-        response.output.get_moves_data.moves = GAME_gen_moves_from_sq(command.data.sq);
+        response.output.get_moves_data.moves = GAME_gen_moves_from_sq(p_a_manager->p_board, command.data.sq);
         break;
     case MANAGER_PLAY_COMMAND_TYPE_CASTLE:
+        {
         GAME_move_t move;
         GAME_move_result_t result;
+        square sq = command.data.sq;
 
         response.has_output = TRUE;
 
         move.from = 0;
         move.to = 0;
 
-        if (p_a_manager->p_board->pieces[command.data.sq] != PIECE_TYPE_ROOK\ // rook should be in castle target
+        if (p_a_manager->p_board->pieces[command.data.sq] != PIECE_TYPE_ROOK // rook should be in castle target
             || p_a_manager->p_board->colors[command.data.sq] != game_current_player)
         {
             response.output.castle_data.castle_result = MANAGER_CASTLE_RESULT_FAIL_NO_ROOK;
         }
-        else if (SQ_TO_FILE(command.data.sq) == SQ_TO_FILE(A1)) // queenside castle
+        else if (SQ_TO_FILE(sq) == SQ_TO_FILE(A1)) // queenside castle
         {
             move.from = SQ_RIGHT(SQ_RIGHT(SQ_RIGHT(SQ_RIGHT(sq))));
             move.to = SQ_RIGHT(SQ_RIGHT(sq));
@@ -163,18 +165,18 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
         else // kingside castle
         {
             move.from = SQ_LEFT(SQ_LEFT(SQ_LEFT(sq)));
-            move.to = SQ_LEFT(SQ_LEFT(sq));
+            move.to = SQ_LEFT(sq);
         }
-
+        printf("playing from %x to %x\n", move.from, move.to);
         result = GAME_make_move(p_a_manager->p_board, move);
 
         if (!result.played)
         {
             response.output.castle_data.castle_result = MANAGER_CASTLE_RESULT_FAIL;
         }
-        else if (result.move_analysis.special_bm & GAME_SPECIAL_CASTLE == 0) // a move was played, but it wasn't a castle. 
+        else if ((result.move_analysis.special_bm & GAME_SPECIAL_CASTLE) == 0) // a move was played, but it wasn't a castle. 
         {
-            GAME_undo_move(p_a_manager->p_a_board);
+            GAME_undo_move(p_a_manager->p_board);
             response.output.castle_data.castle_result = MANAGER_CASTLE_RESULT_FAIL;
         }
         else // castle was successful
@@ -183,6 +185,7 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
             response.output.castle_data.move = result;
         }
         break;
+        }
     default:
         assert(0);
         break;

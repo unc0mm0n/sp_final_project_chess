@@ -77,9 +77,9 @@ AI_move_score_t _AI_minimax(GAME_board_t* p_board, int depth, int a, int b, int 
         return v;
     }
     v.score = AI_MIN_SCORE;
-    for (int rank = 0; rank < NUM_RANKS; file++) // iterate over every square
+    for (int rank = 0; rank < NUM_RANKS; rank++) // iterate over every square
     {
-        for (int file = 0; file < NUM_FILES; rank++)
+        for (int file = 0; file < NUM_FILES; file++)
         {
             p_moves = GAME_gen_moves_from_sq(p_board, SQ_FROM_FILE_RANK(file,rank)); // and generate moves of pieces on it
             if (p_moves == NULL) // if no friendly piece on square, move to next
@@ -91,7 +91,7 @@ AI_move_score_t _AI_minimax(GAME_board_t* p_board, int depth, int a, int b, int 
             while (p_moves[count].verdict == GAME_MOVE_VERDICT_LEGAL)
             {
                 assert(GAME_make_move(p_board, p_moves[count].move).played); // play the move, moves from gen move should be legal;
-                tmp_v =  _AI_minimax(p_board, depth - 1, -b, -a);            // search for the opponent, and take the worst move for him
+                tmp_v =  _AI_minimax(p_board, depth - 1, -b, -a, heuristic);            // search for the opponent, and take the worst move for him
                 GAME_undo_move(p_board);                                     // and finally undo the move
                 if (v.score < -tmp_v.score)                                  // now if move is better keep it and it's score
                 {
@@ -165,7 +165,7 @@ MANAGER_agent_play_command_t _AI_prompt_play_command_hard(const GAME_board_t* p_
 
 MANAGER_agent_play_command_t _AI_prompt_play_command_expert(const GAME_board_t* p_board)
 {
-    return _AI_prompt_play_command(p_board, 6);
+    return _AI_prompt_play_command(p_board, AI_DIFFICULTY_HARD);
 }
 
 void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response)
@@ -177,10 +177,10 @@ void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
         GAME_move_analysis_t analysis = response.output.move_data.move_result.move_analysis;
         char from_str[6], to_str[6];
 
-        square from = move_analysis.move.from;
-        square to = move_analysis.move.to;
+        square from = analysis.move.from;
+        square to = analysis.move.to;
 
-        if (analysis.special_bm & GAME_SPECIAL_CASTLE == 0) // no castle 
+        if ((analysis.special_bm & GAME_SPECIAL_CASTLE) == 0) // no castle 
         {
             CLI_sq_to_str(from, from_str);
             CLI_sq_to_str(to, to_str);

@@ -8,6 +8,7 @@
 #define MAX_INPUT_SIZE (1024)
 #define SPLIT_TOKEN ("\n\t\r ")
 
+// we allow ourselves more freedom with globals here as no more than one terminal CLI can run at a time anyway.
 static BOOL gs_board_printed; // evil global
 static BOOL gs_settings_intro_printed; // evil global
 static char gs_command_buffer[MAX_INPUT_SIZE]; // holds command
@@ -226,7 +227,7 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t *p_a_boa
             square sq_from = _CLI_parse_square(strtok(NULL, SPLIT_TOKEN));
             move.from = sq_from;
             token = strtok(NULL, SPLIT_TOKEN);
-            if ((strcmp(token, "to")) != 0)
+            if ((token == NULL) || ((strcmp(token, "to")) != 0))
             {
                 command.type = MANAGER_PLAY_COMMAND_TYPE_NONE;
                 return command;
@@ -279,14 +280,14 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t *p_a_boa
             square sq_from = _CLI_parse_square(strtok(NULL, SPLIT_TOKEN));
             if (!SQ_IS_LEGAL(sq_from))
             {
-                printf("Invalid position on the board\n.");
+                printf("Invalid position on the board\n");
                 command.type = MANAGER_PLAY_COMMAND_TYPE_NONE;
                 return command;
             }
             command.data.sq = sq_from;
         } else if (strcmp(token, "castle") == 0)
         {
-            command.type = MANAGER_PLAY_COMMAND_TYPE_GET_MOVES;
+            command.type = MANAGER_PLAY_COMMAND_TYPE_CASTLE;
             square sq_from = _CLI_parse_square(strtok(NULL, SPLIT_TOKEN));
             if (!SQ_IS_LEGAL(sq_from) || p_a_board->pieces[sq_from] != PIECE_TYPE_ROOK)
             {
@@ -449,11 +450,12 @@ void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
         }
     case MANAGER_PLAY_COMMAND_TYPE_RESET:
         {
+            gs_board_printed = FALSE;
             gs_settings_intro_printed = FALSE;
             printf("Restarting...\n");
             break;
         }
-    case MANAGERT_PLAY_COMMAND_TYPE_GET_MOVES:
+    case MANAGER_PLAY_COMMAND_TYPE_GET_MOVES:
         {
             GAME_move_analysis_t *analyses = response.output.get_moves_data.moves;
 
@@ -467,14 +469,16 @@ void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
             char to_str[6];
             while (tmp->verdict == GAME_MOVE_VERDICT_LEGAL) // loop one on moves
             {
+                //printf("analyzing\n");
                 if (tmp->special_bm & GAME_SPECIAL_CASTLE)
                 {
+                    tmp++;
                     continue; // castles are handled in the second loop
                 }
 
-                CLI_sq_to_str(tmp->move.to, to_str)
+                CLI_sq_to_str(tmp->move.to, to_str);
 
-                printf("%s");
+                printf("%s", to_str);
                 if (response.output.get_moves_data.display_hints)
                 {
                     if (tmp->special_bm & GAME_SPECIAL_UNDER_ATTACK)
@@ -487,16 +491,18 @@ void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
                     }
                 }
                 printf(" ");
+                tmp++;
             }
-
+            tmp = analyses;
             while (tmp->verdict == GAME_MOVE_VERDICT_LEGAL) // loop 2 on castles
             {
                 if (!(tmp->special_bm & GAME_SPECIAL_CASTLE))
                 {
+                    tmp++;
                     continue;
                 }
 
-                if (SQ_TO_FILE(move.to) == SQ_TO_FILE(C1)) // queenside castle
+                if (SQ_TO_FILE(tmp->move.to) == SQ_TO_FILE(C1)) // queenside castle
                 {
                     CLI_sq_to_str(SQ_LEFT(SQ_LEFT(tmp->move.to)), to_str);
                 } else
@@ -504,25 +510,30 @@ void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
                     CLI_sq_to_str(SQ_RIGHT(tmp->move.to), to_str);
                 }
 
-                printf("castle %s");
+                printf("castle %s", to_str);
                 printf(" ");
+                tmp++;
             }
+            printf("\n");
+            free(analyses);
+            break;
         } //case MANAGERT_PLAY_COMMAND_TYPE_GET_MOVES:
-    case MANAGER_PLAY_COMMAND_TYPE_GET_MOVES:
+    case MANAGER_PLAY_COMMAND_TYPE_CASTLE:
         {
             switch (response.output.castle_data.castle_result) 
             {
             case MANAGER_CASTLE_RESULT_FAIL_NO_ROOK:
                 {
-                    printf("Wring position for rook\n");
+                    printf("Wrong position for rook\n");
                     break;
                 }
             case MANAGER_CASTLE_RESULT_FAIL:
                 {
-                    pritnf("Illegal castling move\n");
+                    printf("Illegal castling move\n");
                     break;
                 }
-            case MANAGER_CASTLE_RESULT_SUCCESFULL:
+            case MANAGER_CASTLE_RESULT_SUCCESS:
+                gs_board_printed = FALSE;
                 break;
             }
         }
