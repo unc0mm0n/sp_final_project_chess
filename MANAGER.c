@@ -65,13 +65,17 @@ void _MANAGER_handle_pre_play(MANAGER_managed_game_t *p_a_manager)
     {
         p_a_manager->play_agents[WHITE] = p_a_manager->settings_agent.get_play_agent();
         p_a_manager->play_agents[BLACK] = p_a_manager->settings_agent.get_play_agent();
-    } else
+    }
+    else if (p_a_manager->p_settings->game_mode == 1)
     {
-        printf("user at color %d\n", p_a_manager->p_settings->user_color);
         p_a_manager->play_agents[p_a_manager->p_settings->user_color] = p_a_manager->settings_agent.get_play_agent();
-        printf("AI difficulty %d\n", p_a_manager->p_settings->difficulty);
         p_a_manager->play_agents[OTHER_COLOR(p_a_manager->p_settings->user_color)] = AI_get_play_agent(p_a_manager->p_settings->difficulty);
         //p_a_manager->play_agents[BLACK] = AI_get_play_agent(2);
+    }
+    else // temporary hidden game mode
+    {
+        p_a_manager->play_agents[WHITE] = AI_get_play_agent(AI_DIFFICULTY_EXPERT);
+        p_a_manager->play_agents[BLACK] = AI_get_play_agent(p_a_manager->p_settings->difficulty);
     }
     p_a_manager->state          = MANAGER_STATE_PLAY;
 }

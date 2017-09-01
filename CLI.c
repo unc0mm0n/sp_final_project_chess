@@ -339,10 +339,16 @@ void CLI_handle_settings_command_response(MANAGER_agent_settings_command_t comma
                 if (command.data.change_setting.value == 1)
                 {
                     printf("Game mode is set to 1 player\n");
-                } else if (command.data.change_setting.value == 2)
+                } 
+                else if (command.data.change_setting.value == 2)
                 {
                     printf("Game mode is set to 2 players\n");
-                } else
+                } 
+                else if (command.data.change_setting.value == 66)
+                {
+                    printf("Hidden mode unlocked!\n");
+                }
+                else
                 {
                     assert(0);
                 }
