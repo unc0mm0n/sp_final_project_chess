@@ -35,7 +35,7 @@ typedef enum AI_DIFFICULTY_S
 typedef struct AI_move_score_s
 {
     int score;
-    GAME_move_t move;
+    GAME_move_analysis_t move;
 } AI_move_score_t;
 
 /**

@@ -96,17 +96,14 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
     switch (command.type)
     {
     case MANAGER_PLAY_COMMAND_TYPE_MOVE: // attempt to make move and notify results
-        /* DEBUG PRINTS* /
-        printf("square: from %x, to %x, promote %d\n", command.data.move.from, command.data.move.to, command.data.move.promote);
-        if (p_a_manager->p_board->turn > 1)
-        {
-            GAME_move_analysis_t lm = p_a_manager->p_board->history[p_a_manager->p_board->turn-1].move;
-            printf("special_bm: %x castle_bm_w: %x castle_bm_b: %x ep: %x turn:%d \n", lm.special_bm, p_a_manager->p_board->castle_bm[WHITE], p_a_manager->p_board->castle_bm[BLACK], p_a_manager->p_board->ep, p_a_manager->p_board->turn);
-        }
-        printf("current player %d\n", GAME_current_player(p_a_manager->p_board));
-        / * END DEBUG PRINTS*/
 
         move_result = GAME_make_move(p_a_manager->p_board, command.data.move);
+        if ((move_result.played) && (move_result.move_analysis.special_bm & GAME_SPECIAL_CASTLE ) > 0)
+        { // castle is only allowed in a weird way..
+            GAME_undo_move(p_a_manager->p_board);
+            move_result.played = FALSE;
+            move_result.move_analysis.verdict = GAME_MOVE_VERDICT_ILLEGAL_MOVE;
+        }
         response.output.move_data.move_result = move_result;
         response.output.move_data.game_result = GAME_get_result(p_a_manager->p_board);
         response.has_output = TRUE;
@@ -176,7 +173,6 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
             move.from = SQ_LEFT(SQ_LEFT(SQ_LEFT(sq)));
             move.to = SQ_LEFT(sq);
         }
-        printf("playing from %x to %x\n", move.from, move.to);
         result = GAME_make_move(p_a_manager->p_board, move);
 
         if (!result.played)

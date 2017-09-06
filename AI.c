@@ -266,7 +266,7 @@ AI_move_score_t _AI_minimax(GAME_board_t* p_board, int depth, int a, int b, int 
         if (v.score < -tmp_v.score)                                  // now if move is better keep it and it's score
         {
             v.score = -tmp_v.score;
-            v.move = p_move->move;
+            v.move = *p_move;
         }
 
                 a = MAX(a, v.score);                                          // and don't forget to update alpha value
@@ -297,15 +297,28 @@ MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_boa
     if (a_difficulty != AI_DIFFICULTY_EXPERT)
     {
         move_score = _AI_minimax(p_board_copy, a_difficulty, AI_MIN_SCORE, AI_MAX_SCORE, _AI_calculate_score_heuristic, _AI_default_move_score);
-        printf("normal move: %d\n", gs_calcs);
     }
     else
     {
-        CLI_print_board(p_board_copy);
         move_score = _AI_minimax(p_board_copy, 5, AI_MIN_SCORE, AI_MAX_SCORE, _AI_expert_calculate_score_heuristic, _AI_expert_move_score);
-        printf("expert move: %d, before score: %d\n", gs_calcs, _AI_expert_calculate_score_heuristic(p_board_copy, GAME_current_player(p_board_copy)));
     }
-    command.data.move = move_score.move; // take the move with the best score
+
+    if ((move_score.move.special_bm & GAME_SPECIAL_CASTLE) > 0)
+    {
+        command.type = MANAGER_PLAY_COMMAND_TYPE_CASTLE;
+        if (SQ_TO_FILE(move_score.move.move.to) == SQ_TO_FILE(C1)) // queenside castle
+        {
+            command.data.sq = SQ_LEFT(SQ_LEFT(move_score.move.move.to));
+        }
+        else
+        {
+            command.data.sq = SQ_RIGHT(move_score.move.move.to);
+        }
+    }
+    else
+    {
+        command.data.move = move_score.move.move; // take the move with the best score
+    }
     GAME_free_board(p_board_copy);
     return command;
 }
@@ -356,7 +369,12 @@ void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
             CLI_sq_to_str(to, to_str);
 
             char* name = PIECE_desc_lut[response.output.move_data.move_result.move_analysis.piece].name;
-            printf("Computer: move %s at %s to %s\n", name, from_str, to_str);
+            printf("Computer: move %s at %s to %s", name, from_str, to_str);
+            if ((analysis.special_bm & GAME_SPECIAL_PROMOTE) > 0)
+            {
+                printf(" and promote to %s", PIECE_desc_lut[response.output.move_data.move_result.move_analysis.move.promote].name);
+            }
+            printf("\n");
         }
         else
         {
