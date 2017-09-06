@@ -12,6 +12,11 @@
 #include "GAME.h"
 
 /**
+ * Handle the event of a manager quitting, by quitting the application.
+ */
+void CLI_handle_quit();
+
+/**
  * return a suitable settings_agent for the CLI.
  *
  * @return MANAGER_settings_agent_t a settings agent for the CLI.

@@ -4,6 +4,7 @@
 
 #include "MANAGER.h"
 #include "AI.h"
+#include "SDL_INTERFACE.h"
 
 /**
  * Handle a game loop iteration in the MANAGER_STATE_SETTINGS 
@@ -110,6 +111,10 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
         response.output.move_data.game_result = GAME_get_result(p_a_manager->p_board);
         response.has_output = TRUE;
         p_a_manager->undo_count = MIN(MANAGER_UNDO_COUNT, p_a_manager->undo_count + 1);
+        if (GAME_get_result(p_a_manager->p_board) != GAME_RESULT_PLAYING)
+        {
+            p_a_manager->state = MANAGER_STATE_QUIT;
+        }
         break;
     case MANAGER_PLAY_COMMAND_TYPE_QUIT: // change to quit state
         p_a_manager->state = MANAGER_STATE_QUIT;
@@ -198,7 +203,7 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
     p_a_manager->play_agents[game_current_player].handle_play_command_response(command, response);
 }
 
-MANAGER_managed_game_t* MANAGER_new_managed_game(MANAGER_settings_agent_t settings_agent)
+MANAGER_managed_game_t* MANAGER_new_managed_game(MANAGER_settings_agent_t settings_agent, void (*quit)())
 {
     MANAGER_managed_game_t *p_manager = (MANAGER_managed_game_t *)malloc(sizeof(MANAGER_managed_game_t));
     assert(p_manager != NULL); // TODO: not assert here.
@@ -210,6 +215,7 @@ MANAGER_managed_game_t* MANAGER_new_managed_game(MANAGER_settings_agent_t settin
     p_manager->p_settings = SETTINGS_new_settings();    // TBD
     assert(p_manager->p_settings != NULL);             // TODO: possibly not assert here.
     p_manager->undo_count = 0;
+    p_manager->handle_quit = quit;
 
     return p_manager;
 }
@@ -250,7 +256,8 @@ void MANAGER_start_game(MANAGER_managed_game_t *p_a_manager)
             assert(0); // invalid state
         }
     }
-
+    
+    p_a_manager->handle_quit();
     // State is now MANAGER_STATE_QUIT
     MANAGER_free_managed_game(p_a_manager);
 }

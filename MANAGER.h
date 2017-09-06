@@ -170,6 +170,15 @@ typedef struct  MANAGER_agent_play_command_response_s
 } MANAGER_agent_play_command_response_t;
 
 /**
+ * union of the commands for convenience
+ */
+typedef union MANAGER_agent_command_u
+{
+    MANAGER_agent_play_command_t play_command;
+    MANAGER_agent_settings_command_t settings_command;
+} MANAGER_agent_command_t;
+
+/**
  * An agent the manager calls to get play related commands
  */
 typedef struct MANAGER_play_agent_s
@@ -207,6 +216,7 @@ typedef struct MANAGER_managed_game_s
     SETTINGS_settings_t* p_settings;          // settings used in the game
     MANAGER_settings_agent_t settings_agent;           // agent used in settings state
     MANAGER_play_agent_t play_agents[NUM_PLAYERS]; // agent BLACK and agent WHITE will be called respectively
+    void (*handle_quit)();                         // Called when the manager quits and frees itself
     int undo_count;                                // how many undos are available.
 
 } MANAGER_managed_game_t;
@@ -218,10 +228,11 @@ typedef struct MANAGER_managed_game_s
  * settings_agent when start_game is called. 
  * 
  * @param settings_agent the agent used to set the settings.
+ * @paeam quit function that frees all relevant resources.
  * 
  * @return MANAGER_managed_game_t* 
  */
-MANAGER_managed_game_t * MANAGER_new_managed_game(MANAGER_settings_agent_t settings_agent);
+MANAGER_managed_game_t * MANAGER_new_managed_game(MANAGER_settings_agent_t settings_agent, void (*quit)());
 
 /**
  * Free a managed game and all accompanying resources.

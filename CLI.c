@@ -13,6 +13,7 @@ static BOOL gs_board_printed; // evil global
 static BOOL gs_settings_intro_printed; // evil global
 static char gs_command_buffer[MAX_INPUT_SIZE]; // holds command
 
+// Parse a string into a square.
 square _CLI_parse_square(char *token)
 {
     if (strlen(token) != 5 || token[0] != '<' || token[2] != ',' || token[4] != '>')
@@ -27,6 +28,7 @@ square _CLI_parse_square(char *token)
     return sq;
 }
 
+// return true if and only if the string is an integer
 BOOL _CLI_is_int(const char *str)
 {
     if (str == NULL)
@@ -52,6 +54,13 @@ BOOL _CLI_is_int(const char *str)
         has_digits++;
     }
     return (has_digits > 0); // We want to verify at least one character is a digit.
+}
+
+void CLI_handle_quit()
+{
+    // CLI doesn't allocate resources, therefore handling quit is easy.
+    printf("Exiting...\n");
+    return;
 }
 
 MANAGER_settings_agent_t CLI_get_settings_agent()
@@ -179,7 +188,6 @@ MANAGER_agent_settings_command_t CLI_prompt_settings_command(const SETTINGS_sett
             command.type = MANAGER_SETTINGS_COMMAND_TYPE_DEFAULT_SETTINGS;
         } else if (strcmp(token, "quit") == 0)
         {
-            printf("Exiting...\n");
             command.type = MANAGER_SETTINGS_COMMAND_TYPE_QUIT;
         } else if (strcmp(token, "start") == 0)
         {
@@ -451,7 +459,6 @@ void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
         } // case MANAGER_PLAY_COMMAND_TYPE_UNDO
     case MANAGER_PLAY_COMMAND_TYPE_QUIT:
         {
-            printf("Exiting...\n");
             break;
         }
     case MANAGER_PLAY_COMMAND_TYPE_RESET:
