@@ -13,10 +13,12 @@
 #include "DEFS.h"
 #include "GAME.h"
 #include "SDL_BUTTON.h"
+#include "SDL_UTILS.h"
 
-#define GAME_WINDOW_H (800)
+#define GAME_WINDOW_H (600)
+#define GAME_WINDOW_W (800)
 #define BOARD_SIZE (600)
-#define BOARD_OFFSET_H ((GAME_WINDOW_H) - (BOARD_SIZE))
+#define BOARD_OFFSET_H ((GAME_WINDOW_W) - (BOARD_SIZE))
 #define CELL_SIZE ((BOARD_SIZE) / 8)
 
 #define GAME_WINDOW_NO_ACTIVE_SQ (0x88)

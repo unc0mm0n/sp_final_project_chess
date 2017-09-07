@@ -32,8 +32,6 @@ MANAGER_agent_command_t SDL_BUTTON_handle_event(SDL_button_t* p_button, SDL_Even
 		if (SDL_PointInRect(&point, &p_button->location)) 
 		{
 			res = p_button->cb();
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Title",
-					"We did it", NULL );
 		}
 		else
 		{

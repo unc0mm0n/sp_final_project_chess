@@ -191,6 +191,13 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
         }
         break;
         }
+    case MANAGER_PLAY_COMMAND_TYPE_RESTART:
+        {
+        GAME_free_board(p_a_manager->p_board);
+        p_a_manager->p_board = GAME_new_board();
+        p_a_manager->undo_count = 0;
+        break;
+        }
     default:
         assert(0);
         break;

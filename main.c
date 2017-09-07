@@ -7,7 +7,7 @@
 int main()
 {
     AI_set_print(TRUE);
-    MANAGER_managed_game_t* game = MANAGER_new_managed_game(CLI_get_settings_agent(), SDL_handle_quit);
+    MANAGER_managed_game_t* game = MANAGER_new_managed_game(SDL_INTERFACE_get_settings_agent(), SDL_handle_quit);
     SDL_INTERFACE_init();
 
     MANAGER_start_game(game);

@@ -11,6 +11,8 @@
 #include "DEFS.h"
 #include "GAME.h"
 #include "SDL_GAME_WINDOW.h"
+#include "SDL_MAIN_WINDOW.h"
+#include "SDL_SETTINGS_WINDOW.h"
 #include "SDL_BUTTON.h"
 
 /**
@@ -29,8 +31,8 @@ typedef enum SDL_INTERFACE_STATE_S
 typedef struct SDL_INTERFACE_manager_s 
 {
 	SDL_GAME_WINDOW_view_t* game_window;
-//	SDL_INTERFACE_main* main_window;
-//	SDL_INTERFACE_settings* settings_window;
+    SDL_MAIN_WINDOW_view_t* main_window;
+	SDL_SETTINGS_WINDOW_view_t* settings_window;
 	SDL_INTERFACE_STATE_E state;
 
 } SDL_INTERFACE_manager_t;
