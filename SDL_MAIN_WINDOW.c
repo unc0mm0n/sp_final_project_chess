@@ -1,6 +1,31 @@
 #include "SDL_MAIN_WINDOW.h"
 #include <assert.h>
 
+SDL_BUTTON_action_t _SDL_MAIN_WINDOW_new_game_button_cb()
+{
+    SDL_BUTTON_action_t cmd;
+    cmd.action = SDL_BUTTON_ACTION_CHANGE_STATE;
+    cmd.new_state = SDL_INTERFACE_STATE_SETTINGS;
+
+    return cmd;
+}
+
+SDL_BUTTON_action_t _SDL_MAIN_WINDOW_load_game_button_cb()
+{
+    SDL_BUTTON_action_t cmd;
+    cmd.action = SDL_BUTTON_ACTION_CHANGE_STATE;
+    cmd.new_state = SDL_INTERFACE_STATE_LOAD;
+
+    return cmd;
+}
+
+SDL_BUTTON_action_t _SDL_MAIN_WINDOW_quit_button_cb()
+{
+    SDL_BUTTON_action_t cmd;
+    cmd.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
+    cmd.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_QUIT;
+    return cmd;
+}
 SDL_MAIN_WINDOW_view_t* SDL_MAIN_WINDOW_create_view()
 {
     SDL_MAIN_WINDOW_view_t* p_view = malloc(sizeof(SDL_MAIN_WINDOW_view_t));
@@ -25,10 +50,15 @@ SDL_MAIN_WINDOW_view_t* SDL_MAIN_WINDOW_create_view()
     p_view->renderer = renderer;
     p_view->bg_texture = SDL_UTILS_load_texture_from_bmp("./graphics/bg.bmp", renderer, FALSE);
     p_view->button_count = 0;
+    
+    SDL_MAIN_WINDOW_add_button(p_view, "./graphics/newgame.bmp", NULL, _SDL_MAIN_WINDOW_new_game_button_cb); 
+    SDL_MAIN_WINDOW_add_button(p_view, "./graphics/loadgame.bmp", NULL, _SDL_MAIN_WINDOW_load_game_button_cb); 
+    SDL_MAIN_WINDOW_add_button(p_view, "./graphics/quit.bmp", NULL, _SDL_MAIN_WINDOW_quit_button_cb); 
+    
     return p_view;
 }
 
-void SDL_MAIN_WINDOW_add_button(SDL_MAIN_WINDOW_view_t* p_view, const char* active_texture_fn, const char* inactive_texture_fn, MANAGER_agent_command_t (*cb)())
+void SDL_MAIN_WINDOW_add_button(SDL_MAIN_WINDOW_view_t* p_view, const char* active_texture_fn, const char* inactive_texture_fn, SDL_BUTTON_action_t (*cb) (int))
 {
     assert(p_view->button_count < MAIN_WINDOW_MAX_BUTTONS);
     SDL_Rect location = {.x=MAIN_WINDOW_BUTTON_OFFSET_X,
@@ -73,21 +103,20 @@ void SDL_MAIN_WINDOW_draw_view(SDL_MAIN_WINDOW_view_t* p_view)
     SDL_RenderPresent(p_view->renderer);
 }
 
-MANAGER_agent_settings_command_t SDL_MAIN_WINDOW_handle_event(SDL_MAIN_WINDOW_view_t* p_view, SDL_Event* event)
+SDL_BUTTON_action_t SDL_MAIN_WINDOW_handle_event(SDL_MAIN_WINDOW_view_t* p_view, SDL_Event* event)
 {
-    MANAGER_agent_settings_command_t cmd;
-    cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_NONE;
+    SDL_BUTTON_action_t act;
+    act.action = SDL_BUTTON_ACTION_NONE;
     if (event->type == SDL_MOUSEBUTTONUP)
     {
         for (int i=0; i < p_view->button_count; i++)
         {
-            MANAGER_agent_command_t c = SDL_BUTTON_handle_event(p_view->buttons[i], event);
-            if (c.type != MANAGER_COMMAND_TYPE_INVALID)
+            SDL_BUTTON_action_t c = SDL_BUTTON_handle_event(p_view->buttons[i], event);
+            if (c.action != SDL_BUTTON_ACTION_NONE)
             {
-                assert(c.type == MANAGER_COMMAND_TYPE_SETTINGS_COMMAND);
-                return c.cmd.settings_command;
+                return c;
             }
         }
     }
-    return cmd;
+    return act;
 }

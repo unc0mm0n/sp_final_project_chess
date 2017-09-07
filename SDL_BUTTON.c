@@ -1,6 +1,6 @@
 #include "SDL_BUTTON.h"
 
-SDL_button_t* SDL_BUTTON_create(BOOL is_active, MANAGER_agent_command_t (*cb)(), SDL_Texture* a_texture, SDL_Texture* i_texture, SDL_Rect location)
+SDL_button_t* SDL_BUTTON_create(BOOL is_active, SDL_BUTTON_action_t (*cb)(int), SDL_Texture* a_texture, SDL_Texture* i_texture, SDL_Rect location)
 {
     SDL_button_t* tmp = malloc(sizeof(SDL_button_t));
     tmp->is_active = is_active;
@@ -17,32 +17,22 @@ void SDL_BUTTON_destroy(SDL_button_t* p_button)
     free(p_button);
 }
 
-MANAGER_agent_command_t SDL_BUTTON_handle_event(SDL_button_t* p_button, SDL_Event* event)
+SDL_BUTTON_action_t SDL_BUTTON_handle_event(SDL_button_t* p_button, SDL_Event* event)
 {
-    MANAGER_agent_command_t res;
-    if ((!p_button->is_active) || (p_button->cb == NULL))
+    SDL_BUTTON_action_t res;
+    res.action = SDL_BUTTON_ACTION_NONE;
+    if (p_button->is_active && p_button->cb != NULL && event->type == SDL_MOUSEBUTTONUP)
     {
-        res.type = MANAGER_COMMAND_TYPE_INVALID;
-    }
-    else if (event->type == SDL_MOUSEBUTTONUP) {
 
 		SDL_Point point;
 		point.x = event->button.x;
 		point.y = event->button.y;
 		if (SDL_PointInRect(&point, &p_button->location)) 
 		{
-			res = p_button->cb();
-		}
-		else
-		{
-			res.type = MANAGER_COMMAND_TYPE_INVALID;
+			res = p_button->cb(p_button->value);
 		}
 
 	} 
-	else 
-	{
-		res.type = MANAGER_COMMAND_TYPE_INVALID;
-    }
     return res;
 }
 

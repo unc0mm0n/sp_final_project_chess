@@ -57,7 +57,7 @@ void SDL_MAIN_WINDOW_destroy_view(SDL_MAIN_WINDOW_view_t* p_view);
  * @param filename texture filename
  * @param cb callback to be called when button is clicked
  */
-void SDL_MAIN_WINDOW_add_button(SDL_MAIN_WINDOW_view_t* p_view, const char* active_texture_fn, const char* inactive_texture_fn, MANAGER_agent_command_t (*cb)());
+void SDL_MAIN_WINDOW_add_button(SDL_MAIN_WINDOW_view_t* p_view, const char* active_texture_fn, const char* inactive_texture_fn, SDL_BUTTON_action_t (*cb)(int));
 
 /**
  * Draw given board in the main view.
@@ -73,6 +73,6 @@ void SDL_MAIN_WINDOW_draw_view(SDL_MAIN_WINDOW_view_t* p_view);
  *
  * @param event SDL event that occured.
  */
-MANAGER_agent_settings_command_t SDL_MAIN_WINDOW_handle_event(SDL_MAIN_WINDOW_view_t* p_view, SDL_Event* event);
+SDL_BUTTON_action_t SDL_MAIN_WINDOW_handle_event(SDL_MAIN_WINDOW_view_t* p_view, SDL_Event* event);
 
 #endif /*SDL_MAIN_WINDOW_IMP*/

@@ -67,24 +67,6 @@ SDL_SETTINGS_WINDOW_view_t* SDL_SETTINGS_WINDOW_create_view();
 void SDL_SETTINGS_WINDOW_destroy_view(SDL_SETTINGS_WINDOW_view_t* p_view);
 
 /**
- * Add a back button the the SDL Game WINDOW.
- *
- * @param p_view pointer to view
- * @param filename texture filename
- * @param cb callback to be called when button is clicked
- */
-void SDL_SETTINGS_WINDOW_add_back_button(SDL_SETTINGS_WINDOW_view_t* p_view, const char* texture_fn, MANAGER_agent_command_t (*cb)());
-
-/**
- * Add a back button the the SDL Game WINDOW.
- *
- * @param p_view pointer to view
- * @param filename texture filename
- * @param cb callback to be called when button is clicked
- */
-void SDL_SETTINGS_WINDOW_add_start_button(SDL_SETTINGS_WINDOW_view_t* p_view, const char* active_texture_fn, MANAGER_agent_command_t (*cb)());
-
-/**
  * The settings view.
  *
  * @param p_view pointer to view.
@@ -98,6 +80,6 @@ void SDL_SETTINGS_WINDOW_draw_view(SDL_SETTINGS_WINDOW_view_t* p_view, const SET
  *
  * @param event SDL event that occured.
  */
-MANAGER_agent_settings_command_t SDL_SETTINGS_WINDOW_handle_event(SDL_SETTINGS_WINDOW_view_t* p_view, SDL_Event* event);
+SDL_BUTTON_action_t SDL_SETTINGS_WINDOW_handle_event(SDL_SETTINGS_WINDOW_view_t* p_view, SDL_Event* event);
 
 #endif /*SDL_SETTINGS_WINDOW_IMP*/

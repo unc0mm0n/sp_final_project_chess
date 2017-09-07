@@ -9,6 +9,7 @@
 
 #include "DEFS.h"
 #include "MANAGER.h"
+#include "SDL_UTILS.h"
 
 #define BUTTON_WIDTH        (180)                                                                                 
 #define BUTTON_HEIGHT       (60)                                                                                  
@@ -18,13 +19,39 @@
 #define BUTTON_PADDING      (10)
 
 /**
+ *  Possible actions envoked by a button press
+ */
+typedef enum SDL_BUTTON_ACTION_TYPE_S
+{
+    SDL_BUTTON_ACTION_NONE,              // do nothing
+    SDL_BUTTON_ACTION_CHANGE_STATE,      // Change the interface state
+    SDL_BUTTON_ACTION_SEND_SETTINGS_CMD, // send settings command
+    SDL_BUTTON_ACTION_SEND_PLAY_CMD      // send play command
+} SDL_BUTTON_ACTION_TYPE_E;
+
+/**
+ * The result returned by a callback
+ */
+typedef struct SDL_BUTTON_action_s
+{
+    SDL_BUTTON_ACTION_TYPE_E action;
+    union
+    {
+        MANAGER_agent_settings_command_t settings_cmd;
+        MANAGER_agent_play_command_t play_cmd;
+        SDL_INTERFACE_STATE_E new_state;
+    };
+} SDL_BUTTON_action_t;
+
+/**
  * A simple button with callback.
  * Calling the handler on a mouse_up event will call the callback only if the button is set to active.
  */
 typedef struct SDL_button_s
 {
     BOOL is_active;
-    MANAGER_agent_command_t (*cb)();   // function that happens when button is pressed.
+    SDL_BUTTON_action_t (*cb)(int);   // function that happens when button is pressed.
+    int value;                            // will be passed to the callback
     SDL_Texture* active_texture;
     SDL_Texture* inactive_texture;
     SDL_Rect location;
@@ -41,7 +68,7 @@ typedef struct SDL_button_s
  *
  * return SDL_button_t* pointer to button
  */
-SDL_button_t* SDL_BUTTON_create(BOOL is_active, MANAGER_agent_command_t (*cb)(), SDL_Texture* a_texture, SDL_Texture* i_texture, SDL_Rect location);
+SDL_button_t* SDL_BUTTON_create(BOOL is_active, SDL_BUTTON_action_t (*cb)(int), SDL_Texture* a_texture, SDL_Texture* i_texture, SDL_Rect location);
 
 /**
  * destroy button, freeing it.
@@ -57,9 +84,9 @@ void SDL_BUTTON_destroy(SDL_button_t* p_button);
  * @param p_button pointer to button.
  * @param event the event that occured.
  * 
- * @return MANAGER_agent_command_t command make by button, if no command is made the type will be invalid
+ * @return SDL_BUTTON_action_t action to be made by the button press.
  */
-MANAGER_agent_command_t SDL_BUTTON_handle_event(SDL_button_t* p_button, SDL_Event* event);
+SDL_BUTTON_action_t SDL_BUTTON_handle_event(SDL_button_t* p_button, SDL_Event* event);
 
 /**
  * Render the button in given renderer, based on it's given textures, location and active state

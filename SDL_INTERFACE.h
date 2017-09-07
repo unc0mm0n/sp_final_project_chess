@@ -14,19 +14,7 @@
 #include "SDL_MAIN_WINDOW.h"
 #include "SDL_SETTINGS_WINDOW.h"
 #include "SDL_BUTTON.h"
-
-/**
- * What the SDL GUI does is decided by it's own internal state
- */
-
-typedef enum SDL_INTERFACE_STATE_S
-{
-    SDL_INTERFACE_STATE_MAIN_MENU,   // initial state
-    SDL_INTERFACE_STATE_SETTINGS,    // settings state when settings window clicked
-    SDL_INTERFACE_STATE_LOAD,        // load state when load game clicked
-    SDL_INTERFACE_STATE_GAME,        // state where game has started
-    SDL_INTERFACE_STATE_INVALID
-} SDL_INTERFACE_STATE_E;
+#include "SDL_UTILS.h"
 
 typedef struct SDL_INTERFACE_manager_s 
 {
@@ -62,5 +50,11 @@ MANAGER_settings_agent_t SDL_INTERFACE_get_settings_agent();
  */
 void SDL_handle_quit();
 
+/**
+ * Move the interface to a new state
+ *
+ * @param new_state new state for the interface
+ */
+void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFACE_STATE_E new_state);
 
 #endif /*SDL_INTERFACE_IMP*/

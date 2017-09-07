@@ -6,35 +6,35 @@
 #include "PIECE.h"
 #include "GAME.h"
 
-MANAGER_agent_command_t _SDL_GAME_WINDOW_play_new_game_button_cb()
+SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_new_game_button_cb()
 {
-    MANAGER_agent_command_t cmd;
-    cmd.type = MANAGER_COMMAND_TYPE_PLAY_COMMAND;
-    cmd.cmd.play_command.type = MANAGER_PLAY_COMMAND_TYPE_RESTART;
+    SDL_BUTTON_action_t cmd;
+    cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+    cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_RESTART;
     return cmd;
 }
 
-MANAGER_agent_command_t _SDL_GAME_WINDOW_play_main_menu_button_cb()
+SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_main_menu_button_cb()
 {
-    MANAGER_agent_command_t cmd;
-    cmd.type = MANAGER_COMMAND_TYPE_PLAY_COMMAND;
-    cmd.cmd.play_command.type = MANAGER_PLAY_COMMAND_TYPE_RESET;
+    SDL_BUTTON_action_t cmd;
+    cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+    cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_RESET;
     return cmd;
 }
 
-MANAGER_agent_command_t _SDL_GAME_WINDOW_play_last_move_button_cb()
+SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_last_move_button_cb()
 {
-    MANAGER_agent_command_t cmd;
-    cmd.type = MANAGER_COMMAND_TYPE_PLAY_COMMAND;
-    cmd.cmd.play_command.type = MANAGER_PLAY_COMMAND_TYPE_UNDO;
+    SDL_BUTTON_action_t cmd;
+    cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+    cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_UNDO;
     return cmd;
 }
 
-MANAGER_agent_command_t _SDL_GAME_WINDOW_play_quit_button_cb()
+SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_quit_button_cb()
 {
-    MANAGER_agent_command_t cmd;
-    cmd.type = MANAGER_COMMAND_TYPE_PLAY_COMMAND;
-    cmd.cmd.play_command.type = MANAGER_PLAY_COMMAND_TYPE_QUIT;
+    SDL_BUTTON_action_t cmd;
+    cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+    cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_QUIT;
     return cmd;
 }
 
@@ -100,7 +100,7 @@ SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
     return p_view;
 }
 
-void SDL_GAME_WINDOW_add_button(SDL_GAME_WINDOW_view_t* p_view, const char* active_texture_fn, const char* inactive_texture_fn, MANAGER_agent_command_t (*cb)())
+void SDL_GAME_WINDOW_add_button(SDL_GAME_WINDOW_view_t* p_view, const char* active_texture_fn, const char* inactive_texture_fn, SDL_BUTTON_action_t (*cb)())
 {
     assert(p_view->button_count < GAME_WINDOW_MAX_BUTTONS);
     SDL_Rect location = {.x=BUTTON_X, .y=BUTTON_PADDING + p_view->button_count * BUTTON_AREA_HEIGHT, .h=BUTTON_HEIGHT, .w=BUTTON_WIDTH};
@@ -222,9 +222,11 @@ void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_
     SDL_RenderPresent(p_view->renderer);
 }
 
-MANAGER_agent_play_command_t SDL_GAME_WINDOW_handle_event(SDL_GAME_WINDOW_view_t* p_view, SDL_Event* event, const GAME_board_t* p_board)
+SDL_BUTTON_action_t SDL_GAME_WINDOW_handle_event(SDL_GAME_WINDOW_view_t* p_view, SDL_Event* event, const GAME_board_t* p_board)
 {
     MANAGER_agent_play_command_t cmd;
+    SDL_BUTTON_action_t act;
+    act.action = SDL_BUTTON_ACTION_NONE;
     cmd.type = MANAGER_PLAY_COMMAND_TYPE_NONE;
     if(event->type == SDL_MOUSEBUTTONUP) //SDL_MouseButtonEvent
     {
@@ -235,6 +237,7 @@ MANAGER_agent_play_command_t SDL_GAME_WINDOW_handle_event(SDL_GAME_WINDOW_view_t
                 square sq = _SDL_GAME_WINDOW_get_sq_from_x_y(event->button.x, event->button.y);
                 if (sq != p_view->active_sq)
                 {
+                    act.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
                     if (p_board->pieces[p_view->active_sq] == PIECE_TYPE_KING && 
                             (abs(SQ_TO_FILE(sq) - SQ_TO_FILE(p_view->active_sq)) > 1))
                     { // king moving more than one square, can only be legal if it's castle
@@ -260,11 +263,10 @@ MANAGER_agent_play_command_t SDL_GAME_WINDOW_handle_event(SDL_GAME_WINDOW_view_t
             {
                 for (int i=0; i < p_view->button_count; i++)
                 {
-                    MANAGER_agent_command_t c = SDL_BUTTON_handle_event(p_view->buttons[i], event);
-                    if (c.type != MANAGER_COMMAND_TYPE_INVALID)
+                    SDL_BUTTON_action_t c = SDL_BUTTON_handle_event(p_view->buttons[i], event);
+                    if (c.action != SDL_BUTTON_ACTION_NONE)
                     {
-                        assert(c.type == MANAGER_COMMAND_TYPE_PLAY_COMMAND);
-                        return c.cmd.play_command;
+                        return c;
                     }
                 }
             }
@@ -286,10 +288,12 @@ MANAGER_agent_play_command_t SDL_GAME_WINDOW_handle_event(SDL_GAME_WINDOW_view_t
                 }
             }
         }
+        act.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
         square sq = _SDL_GAME_WINDOW_get_sq_from_x_y(event->button.x, event->button.y);
         cmd.type = MANAGER_PLAY_COMMAND_TYPE_GET_MOVES;
         cmd.data.sq = sq;
     }
-    return cmd;
+    act.play_cmd = cmd;
+    return act;
 }
 

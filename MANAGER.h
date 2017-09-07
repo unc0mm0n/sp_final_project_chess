@@ -171,30 +171,6 @@ typedef struct  MANAGER_agent_play_command_response_s
 } MANAGER_agent_play_command_response_t;
 
 /**
- * The possible command types
- */
-typedef enum MANAGER_COMMAND_TYPE_S
-{
-    MANAGER_COMMAND_TYPE_INVALID,
-    MANAGER_COMMAND_TYPE_SETTINGS_COMMAND,
-    MANAGER_COMMAND_TYPE_PLAY_COMMAND
-} MANAGER_COMMAND_TYPE_E;
-
-/**
- * union of the commands for convenience
- */
-typedef struct MANAGER_agent_command_u
-{
-    MANAGER_COMMAND_TYPE_E type;
-
-    union
-    {
-        MANAGER_agent_play_command_t play_command;
-        MANAGER_agent_settings_command_t settings_command;
-    } cmd;
-} MANAGER_agent_command_t;
-
-/**
  * An agent the manager calls to get play related commands
  */
 typedef struct MANAGER_play_agent_s
