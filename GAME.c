@@ -306,10 +306,11 @@ GAME_board_t * GAME_new_board()
     _GAME_init_color(p_board);
     
     // Initialize parameters
-    p_board->turn         = 1;
-    p_board->ep           = GAME_NO_EP;
-    p_board->castle_bm[0] = GAME_CASTLE_ALL;
-    p_board->castle_bm[1] = GAME_CASTLE_ALL;
+    p_board->turn          = 1;
+    p_board->ep            = GAME_NO_EP;
+    p_board->history[1].ep = GAME_NO_EP; // no ep in first move
+    p_board->castle_bm[0]  = GAME_CASTLE_ALL;
+    p_board->castle_bm[1]  = GAME_CASTLE_ALL;
 
     return p_board;
 }
@@ -370,7 +371,7 @@ BOOL GAME_is_attacking(const GAME_board_t* p_a_board, COLOR color, square sq)
 
     PIECE_desc_t desc;
     // check other pieces
-    for (int i = PIECE_TYPE_KNIGHT; i < PIECE_TYPE_MAX; i++)
+    for (PIECE_TYPE_E i = PIECE_TYPE_KNIGHT; i < PIECE_TYPE_MAX; i++)
     {
         desc = PIECE_desc_lut[i];
         square tmp;

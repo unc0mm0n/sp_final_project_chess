@@ -24,6 +24,7 @@ typedef enum SDL_INTERFACE_STATE_S
     SDL_INTERFACE_STATE_SETTINGS,    // settings state when settings window clicked
     SDL_INTERFACE_STATE_LOAD,        // load state when load game clicked
     SDL_INTERFACE_STATE_GAME,        // state where game has started
+    SDL_INTERFACE_STATE_QUIT,        // attempt to clear all resources and quit
     SDL_INTERFACE_STATE_INVALID
 } SDL_INTERFACE_STATE_E;
 

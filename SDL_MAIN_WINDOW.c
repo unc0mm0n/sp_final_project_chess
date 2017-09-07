@@ -67,7 +67,7 @@ void SDL_MAIN_WINDOW_add_button(SDL_MAIN_WINDOW_view_t* p_view, const char* acti
         .w=MAIN_WINDOW_BUTTON_W};
     SDL_Texture * b_texture = SDL_UTILS_load_texture_from_bmp(active_texture_fn, p_view->renderer, FALSE);
     SDL_Texture* d_texture = SDL_UTILS_load_texture_from_bmp(inactive_texture_fn, p_view->renderer, FALSE);
-    p_view->buttons[p_view->button_count] = SDL_BUTTON_create(TRUE, cb, b_texture, d_texture, location);
+    p_view->buttons[p_view->button_count] = SDL_BUTTON_create(TRUE, cb, b_texture, d_texture, location, 0);
     p_view->button_count++;
 }
 

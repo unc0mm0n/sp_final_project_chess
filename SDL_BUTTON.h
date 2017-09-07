@@ -68,7 +68,7 @@ typedef struct SDL_button_s
  *
  * return SDL_button_t* pointer to button
  */
-SDL_button_t* SDL_BUTTON_create(BOOL is_active, SDL_BUTTON_action_t (*cb)(int), SDL_Texture* a_texture, SDL_Texture* i_texture, SDL_Rect location);
+SDL_button_t* SDL_BUTTON_create(BOOL is_active, SDL_BUTTON_action_t (*cb)(int), SDL_Texture* a_texture, SDL_Texture* i_texture, SDL_Rect location, int value);
 
 /**
  * destroy button, freeing it.

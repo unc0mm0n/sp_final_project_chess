@@ -50,6 +50,11 @@ MANAGER_agent_settings_command_t _SDL_INTERFACE_prompt_settings(const SETTINGS_s
         act = SDL_SETTINGS_WINDOW_handle_event(sdl_manager->settings_window, &event);
         break;
     }
+    case SDL_INTERFACE_STATE_QUIT:
+    {
+        act.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
+        act.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_QUIT;
+    }
     default:
     {
         assert(0);
@@ -73,8 +78,7 @@ void _SDL_INTERFACE_handle_play_command_response(MANAGER_agent_play_command_t co
         sdl_manager->game_window->fixed_castle = FALSE;
     }
     else if (command.type == MANAGER_PLAY_COMMAND_TYPE_RESET)
-    {
-    
+    { 
         SDL_INTERFACE_change_state(sdl_manager, SDL_INTERFACE_STATE_MAIN_MENU);
     }
 }
@@ -124,7 +128,7 @@ MANAGER_settings_agent_t SDL_INTERFACE_get_settings_agent()
 
 void SDL_handle_quit()
 {
-    SDL_GAME_WINDOW_destroy_view(sdl_manager->game_window);
+    SDL_INTERFACE_change_state(sdl_manager, SDL_INTERFACE_STATE_QUIT); // will terminate all windows
     free(sdl_manager);
 
 	SDL_Quit();
@@ -153,18 +157,34 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
             break;
     }
 
+    p_manager->state = new_state;
+
     switch (new_state) // create new view
     {
         case SDL_INTERFACE_STATE_MAIN_MENU:
             p_manager->main_window = SDL_MAIN_WINDOW_create_view();
+            if (p_manager->main_window == NULL) // SDL or allocation error
+            {
+                printf("Error: Unable to load main window\n");
+                p_manager->state = SDL_INTERFACE_STATE_QUIT;            
+            }
             break;
         case SDL_INTERFACE_STATE_SETTINGS:
             p_manager->settings_window = SDL_SETTINGS_WINDOW_create_view();
+            if (p_manager->settings_window == NULL) // SDL or allocation error
+            {
+                printf("Error: Unable to load settings window\n");
+                p_manager->state = SDL_INTERFACE_STATE_QUIT;            
+            }
             break;
         case SDL_INTERFACE_STATE_GAME:
             p_manager->game_window = SDL_GAME_WINDOW_create_view();
+            if (p_manager->game_window == NULL) // SDL or allocation error
+            {
+                printf("Error: Unable to load game window\n");
+                p_manager->state = SDL_INTERFACE_STATE_QUIT;            
+            }
             break;
     }
 
-    p_manager->state = new_state;
 }

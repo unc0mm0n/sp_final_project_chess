@@ -1,13 +1,19 @@
 #include "SDL_BUTTON.h"
 
-SDL_button_t* SDL_BUTTON_create(BOOL is_active, SDL_BUTTON_action_t (*cb)(int), SDL_Texture* a_texture, SDL_Texture* i_texture, SDL_Rect location)
+SDL_button_t* SDL_BUTTON_create(BOOL is_active, SDL_BUTTON_action_t (*cb)(int), SDL_Texture* a_texture, SDL_Texture* i_texture, SDL_Rect location, int value)
 {
     SDL_button_t* tmp = malloc(sizeof(SDL_button_t));
+    if (tmp == NULL)
+    {
+        printf("Error: Unable to create button\n");
+        return NULL;
+    }
     tmp->is_active = is_active;
     tmp->cb = cb;
     tmp->active_texture = a_texture;
     tmp->inactive_texture = i_texture;
     tmp->location = location;
+    tmp->value = value;
     return tmp;
 }
 
@@ -38,6 +44,10 @@ SDL_BUTTON_action_t SDL_BUTTON_handle_event(SDL_button_t* p_button, SDL_Event* e
 
 void SDL_BUTTON_render(SDL_button_t* p_button, SDL_Renderer* renderer)
 {
+    if (p_button == NULL)
+    {
+        return;
+    }
     if (p_button->is_active)
     {
         SDL_RenderCopy(renderer, p_button->active_texture, NULL, &p_button->location);

@@ -25,6 +25,7 @@
 #define SETTINGS_WINDOW_BUTTON_SPACING  (20)
 #define SETTINGS_WINDOW_BUTTON_AREA_H   (SETTINGS_WINDOW_BUTTON_H + SETTINGS_WINDOW_BUTTON_SPACING)
 
+#define SETTINGS_WINDOW_MAX_BUTTONS  (2+5+2+1+1) // 2 modes 5 difficulties 2 colors 1 back 1 start
 
 typedef enum SDL_SETTINGS_WINDOW_SECTION_S
 {
@@ -44,11 +45,13 @@ typedef struct
 {
 	SDL_Window* window;                 // SDL window to show
 	SDL_Renderer* renderer;             // SDL renderer to use
-    SDL_button_t* mode_buttons[2];
-    SDL_button_t* difficulty_buttons[5];
-    SDL_button_t* color_buttons[2];
-    SDL_button_t* back_button;
-    SDL_button_t* start_button;
+    SDL_button_t** buttons;             // array of all buttons
+    SDL_button_t** mode_buttons;        // pointer to location in array of mode buttons
+    SDL_button_t** difficulty_buttons;  // pointer to location in array of difficulty buttons
+    SDL_button_t** color_buttons;       // pointer to location in array of color buttons
+    SDL_button_t* back_button;          // pointer to back button
+    SDL_button_t* start_button;         // pointer to start button
+    int button_count;                   // number of actual buttons
 } SDL_SETTINGS_WINDOW_view_t;
 
 /**

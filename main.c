@@ -4,12 +4,19 @@
 #include "SDL_INTERFACE.h"
 #include "SDL_GAME_WINDOW.h"
 
-int main()
+int main(int argv, char * argc[])
 {
-    AI_set_print(TRUE);
-    MANAGER_managed_game_t* game = MANAGER_new_managed_game(SDL_INTERFACE_get_settings_agent(), SDL_handle_quit);
-    SDL_INTERFACE_init();
-
+    MANAGER_managed_game_t* game ;
+    if (argv != 2 || argc[1][1] != 'g')
+    {
+        AI_set_print(TRUE);
+        game = MANAGER_new_managed_game(CLI_get_settings_agent(), CLI_handle_quit);
+    }
+    else
+    {
+        game = MANAGER_new_managed_game(SDL_INTERFACE_get_settings_agent(), SDL_handle_quit);
+        SDL_INTERFACE_init();
+    }
     MANAGER_start_game(game);
 
     return 0;

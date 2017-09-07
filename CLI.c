@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 #include "CLI.h"
-#include "SDL_INTERFACE.h" /*tmp*/
 
 #define MAX_INPUT_SIZE (1024)
 #define SPLIT_TOKEN ("\n\t\r ")
@@ -70,7 +69,7 @@ MANAGER_settings_agent_t CLI_get_settings_agent()
     MANAGER_settings_agent_t agent;
     agent.prompt_settings_command = CLI_prompt_settings_command;
     agent.handle_settigns_command_response = CLI_handle_settings_command_response;
-    agent.get_play_agent = SDL_INTERFACE_get_play_agent; /*tmp Should be CLI_get_play_agent*/
+    agent.get_play_agent = CLI_get_play_agent; /*tmp Should be CLI_get_play_agent*/
 
     return agent;
 }
@@ -551,6 +550,9 @@ void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
                 break;
             }
         }
+    case MANAGER_PLAY_COMMAND_TYPE_NONE:
+    case MANAGER_PLAY_COMMAND_TYPE_RESTART:
+        break; // commands not relevant to CLI mode
     } // switch(command.type)
 }
 

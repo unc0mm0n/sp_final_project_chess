@@ -106,7 +106,7 @@ void SDL_GAME_WINDOW_add_button(SDL_GAME_WINDOW_view_t* p_view, const char* acti
     SDL_Rect location = {.x=BUTTON_X, .y=BUTTON_PADDING + p_view->button_count * BUTTON_AREA_HEIGHT, .h=BUTTON_HEIGHT, .w=BUTTON_WIDTH};
     SDL_Texture * b_texture = SDL_UTILS_load_texture_from_bmp(active_texture_fn, p_view->renderer, FALSE);
     SDL_Texture* d_texture = SDL_UTILS_load_texture_from_bmp(inactive_texture_fn, p_view->renderer, FALSE);
-    p_view->buttons[p_view->button_count] = SDL_BUTTON_create(TRUE, cb, b_texture, d_texture, location);
+    p_view->buttons[p_view->button_count] = SDL_BUTTON_create(TRUE, cb, b_texture, d_texture, location, 0);
     p_view->button_count++;
 }
 
@@ -124,6 +124,11 @@ void SDL_GAME_WINDOW_destroy_view(SDL_GAME_WINDOW_view_t* p_view)
         SDL_BUTTON_destroy(p_view->buttons[i]);
     }
     free(p_view->buttons);
+
+    if (p_view->marked_moves != NULL)
+    {
+        free(p_view->marked_moves);
+    }
 
     free(p_view);
 }
@@ -271,6 +276,10 @@ SDL_BUTTON_action_t SDL_GAME_WINDOW_handle_event(SDL_GAME_WINDOW_view_t* p_view,
                 }
             }
             p_view->active_sq = GAME_WINDOW_NO_ACTIVE_SQ;
+        }
+        if (p_view->marked_moves != NULL)
+        {
+            free(p_view->marked_moves);
         }
         p_view->marked_moves = NULL;
         p_view->fixed_castle = FALSE;
