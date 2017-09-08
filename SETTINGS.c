@@ -80,3 +80,15 @@ void SETTINGS_reset_settings(SETTINGS_settings_t * p_a_settings)
     p_a_settings->game_mode = SETTINGS_DEFAULT_GAME_MODE;
 
 }
+
+BOOL SETTINGS_is_active(const SETTINGS_settings_t* p_a_settings, SETTINGS_SETTING_E a_setting)
+{
+    if (p_a_settings->game_mode == 1)
+    {
+        return TRUE;
+    }
+    else
+    {
+        return (a_setting == SETTINGS_SETTING_GAME_MODE);
+    }
+}

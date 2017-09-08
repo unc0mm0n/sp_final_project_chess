@@ -89,6 +89,10 @@ void _SDL_INTERFACE_handle_settings_command_response(MANAGER_agent_settings_comm
     {
         SDL_INTERFACE_change_state(sdl_manager, SDL_INTERFACE_STATE_GAME);
     }
+    if (command.type == MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING)
+    {
+        assert(response.has_output && response.output.settings_change_result == SETTINGS_CHANGE_RESULT_SUCCESS);
+    }
 }
 
 void SDL_INTERFACE_init()

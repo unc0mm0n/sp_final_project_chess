@@ -353,11 +353,23 @@ MANAGER_agent_play_command_t _AI_prompt_play_command_expert(const GAME_board_t* 
 
 void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response)
 {
-    assert(command.type == MANAGER_PLAY_COMMAND_TYPE_MOVE);
-    assert(response.output.move_data.move_result.played); // computer must make legal moves
+    GAME_RESULT_E game_result;
+    GAME_move_analysis_t analysis;
+    if (command.type == MANAGER_PLAY_COMMAND_TYPE_MOVE)
+    {
+        analysis = response.output.move_data.move_result.move_analysis;
+        game_result = response.output.move_data.game_result;
+        assert(response.has_output && analysis.verdict == GAME_MOVE_VERDICT_LEGAL);
+    }
+    else if (command.type == MANAGER_PLAY_COMMAND_TYPE_CASTLE)
+    {
+        analysis = response.output.castle_data.move.move_analysis;
+        game_result = response.output.castle_data.game_result;
+        assert(response.has_output && analysis.verdict == GAME_MOVE_VERDICT_LEGAL);
+    }
+
     if (gs_print) // make all computer specific prints to screen.
     {
-        GAME_move_analysis_t analysis = response.output.move_data.move_result.move_analysis;
         char from_str[6], to_str[6];
 
         square from = analysis.move.from;
@@ -368,11 +380,11 @@ void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
             CLI_sq_to_str(from, from_str);
             CLI_sq_to_str(to, to_str);
 
-            char* name = PIECE_desc_lut[response.output.move_data.move_result.move_analysis.piece].name;
+            char* name = PIECE_desc_lut[analysis.piece].name;
             printf("Computer: move %s at %s to %s", name, from_str, to_str);
             if ((analysis.special_bm & GAME_SPECIAL_PROMOTE) > 0)
             {
-                printf(" and promote to %s", PIECE_desc_lut[response.output.move_data.move_result.move_analysis.move.promote].name);
+                printf(" and promote to %s", PIECE_desc_lut[analysis.move.promote].name);
             }
             printf("\n");
         }
@@ -392,7 +404,7 @@ void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
 
             printf("Computer: castle King at %s and Rook at %s\n", from_str, to_str);
         }
-        switch( response.output.move_data.game_result)
+        switch(game_result)
         {
             case GAME_RESULT_DRAW:
                 printf("The game ends in a tie\n");

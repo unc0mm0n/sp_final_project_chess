@@ -91,5 +91,15 @@ SETTINGS_CHANGE_RESULT_E SETTINGS_change_setting(SETTINGS_settings_t* p_a_settin
  */
 void SETTINGS_reset_settings(SETTINGS_settings_t* p_a_settings);
 
+/**
+ * return TRUE if the setting is active in the current game mode
+ *
+ * @param p_a_settings pointer to relevant settings object
+ * @param a_setting setting which could be active
+ *
+ * @return TRUE if the setting is active
+ */
+BOOL SETTINGS_is_active(const SETTINGS_settings_t* p_a_settings, SETTINGS_SETTING_E a_setting);
+
 #endif /*SETTINGS_IMP*/
 

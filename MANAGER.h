@@ -157,6 +157,7 @@ typedef struct  MANAGER_agent_play_command_response_s
 
         struct {  // CASTLE command
             MANAGER_CASTLE_RESULT_E castle_result;
+            GAME_RESULT_E game_result;
             GAME_move_result_t move;
         } castle_data;
 

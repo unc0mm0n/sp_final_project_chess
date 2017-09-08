@@ -188,6 +188,12 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
         {
             response.output.castle_data.castle_result = MANAGER_CASTLE_RESULT_SUCCESS;
             response.output.castle_data.move = result;
+            response.output.castle_data.game_result = GAME_get_result(p_a_manager->p_board);
+            p_a_manager->undo_count = MIN(MANAGER_UNDO_COUNT, p_a_manager->undo_count + 1);
+            if (GAME_get_result(p_a_manager->p_board) != GAME_RESULT_PLAYING)
+            {
+                p_a_manager->state = MANAGER_STATE_QUIT;
+            }
         }
         break;
         }
