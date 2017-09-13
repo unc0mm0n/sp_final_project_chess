@@ -5,7 +5,7 @@ SDL_button_t* SDL_BUTTON_create(BOOL is_active, SDL_BUTTON_action_t (*cb)(int), 
     SDL_button_t* tmp = malloc(sizeof(SDL_button_t));
     if (tmp == NULL)
     {
-        printf("Error: Unable to create button\n");
+        printf("ERROR: Unable to create button\n");
         return NULL;
     }
     tmp->is_active = is_active;

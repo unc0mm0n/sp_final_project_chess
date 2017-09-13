@@ -66,8 +66,10 @@ void SDL_GAME_WINDOW_destroy_view(SDL_GAME_WINDOW_view_t* p_view);
  * @param p_view pointer to view
  * @param filename texture filename
  * @param cb callback to be called when button is clicked
+ *
+ * @return BOOL True if button added succesfully
  */
-void SDL_GAME_WINDOW_add_button(SDL_GAME_WINDOW_view_t* p_view, const char* active_texture_fn, const char* inactive_texture_fn, SDL_BUTTON_action_t (*cb)(int));
+BOOL SDL_GAME_WINDOW_add_button(SDL_GAME_WINDOW_view_t* p_view, const char* active_texture_fn, const char* inactive_texture_fn, SDL_BUTTON_action_t (*cb)(int));
 
 /**
  * Draw given board in the game view.

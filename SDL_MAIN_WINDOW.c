@@ -35,6 +35,11 @@ SDL_BUTTON_action_t _SDL_MAIN_WINDOW_quit_button_cb()
 SDL_MAIN_WINDOW_view_t* SDL_MAIN_WINDOW_create_view()
 {
     SDL_MAIN_WINDOW_view_t* p_view = malloc(sizeof(SDL_MAIN_WINDOW_view_t));
+    if (p_view == NULL)
+    {
+        return NULL;
+    }
+
     SDL_Window* window = SDL_CreateWindow("Tests", SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED, MAIN_WINDOW_W, MAIN_WINDOW_H, SDL_WINDOW_OPENGL);
 
@@ -43,8 +48,9 @@ SDL_MAIN_WINDOW_view_t* SDL_MAIN_WINDOW_create_view()
     
     p_view->buttons = malloc(sizeof(SDL_button_t) * MAIN_WINDOW_MAX_BUTTONS);
     
-    if (p_view == NULL || window == NULL || renderer == NULL || p_view->buttons == NULL) 
+    if (window == NULL || renderer == NULL || p_view->buttons == NULL) 
     {
+        free(p_view->buttons);
         free(p_view);
         //We first destroy the renderer
         SDL_DestroyRenderer(renderer); //NULL safe

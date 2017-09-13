@@ -104,11 +104,11 @@ PIECE_TYPE_E _SDL_GAME_WINDOW_prompt_promote(SDL_GAME_WINDOW_view_t* p_view)
 
     int buttonid;
     if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0) {
-        printf("Error: displaying promotion message box");
+        printf("ERROR: displaying promotion message box");
         return 0;
     }
     if (buttonid == -1) {
-        printf("Error: no selection");
+        printf("ERROR: no selection");
     }
 
     return buttonid;
@@ -138,25 +138,28 @@ void _SDL_GAME_WINDOW_draw_piece_at_rect(SDL_GAME_WINDOW_view_t* p_view, PIECE_T
 SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
 {
     SDL_GAME_WINDOW_view_t* p_view = malloc(sizeof(SDL_GAME_WINDOW_view_t));
+
+    if (p_view == NULL)
+    {
+        return NULL;
+    }
     SDL_Window* window = SDL_CreateWindow("Tests", SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED, GAME_WINDOW_W, GAME_WINDOW_H, SDL_WINDOW_OPENGL);
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1,
             SDL_RENDERER_ACCELERATED);
-    if (p_view == NULL || window == NULL || renderer == NULL) 
-    {
-        free(p_view);
-        //We first destroy the renderer
-        SDL_DestroyRenderer(renderer); //NULL safe
-        SDL_DestroyWindow(window); //NULL safe
-        return NULL ;
-    }
+
+    p_view->pieces_texture_white = malloc(sizeof(SDL_Texture*) * PIECE_TYPE_MAX);
+    p_view->pieces_texture_black = malloc(sizeof(SDL_Texture*) * PIECE_TYPE_MAX);
+
+    p_view->buttons = malloc(sizeof(SDL_button_t) * GAME_WINDOW_MAX_BUTTONS);
+
+    p_view->bg_texture = SDL_UTILS_load_texture_from_bmp("./graphics/bg.bmp", renderer, FALSE);
+
+
 
     p_view->window = window;
     p_view->renderer = renderer;
-    p_view->bg_texture = SDL_UTILS_load_texture_from_bmp("./graphics/bg.bmp", renderer, FALSE);
-    p_view->pieces_texture_white = malloc(sizeof(SDL_Texture*) * PIECE_TYPE_MAX);
-    p_view->pieces_texture_black = malloc(sizeof(SDL_Texture*) * PIECE_TYPE_MAX);
 
     p_view->active_sq = GAME_WINDOW_NO_ACTIVE_SQ;
     p_view->marked_moves = NULL;
@@ -180,27 +183,43 @@ SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
         p_view->pieces_texture_black[i] = SDL_UTILS_load_texture_from_bmp(bname, renderer, TRUE);
     }
 
-    p_view->buttons = malloc(sizeof(SDL_button_t) * GAME_WINDOW_MAX_BUTTONS);
     p_view->button_count = 0;
-
-    SDL_GAME_WINDOW_add_button(p_view, "./graphics/newgame.bmp", NULL, _SDL_GAME_WINDOW_play_new_game_button_cb); 
-    SDL_GAME_WINDOW_add_button(p_view, "./graphics/loadgame.bmp", NULL, NULL); 
-    SDL_GAME_WINDOW_add_button(p_view, "./graphics/savegame.bmp", NULL, NULL); 
-    SDL_GAME_WINDOW_add_button(p_view, "./graphics/mainmenu.bmp", NULL, _SDL_GAME_WINDOW_play_main_menu_button_cb); 
-    SDL_GAME_WINDOW_add_button(p_view, "./graphics/last_move.bmp", "./graphics/undo_i.bmp", _SDL_GAME_WINDOW_play_last_move_button_cb); 
+    BOOL success = TRUE; // check if any of the operations failed
+    success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/newgame.bmp", NULL, _SDL_GAME_WINDOW_play_new_game_button_cb);
+    success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/loadgame.bmp", NULL, NULL); 
+    success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/savegame.bmp", NULL, NULL); 
+    success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/mainmenu.bmp", NULL, _SDL_GAME_WINDOW_play_main_menu_button_cb); 
+    success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/last_move.bmp", "./graphics/undo_i.bmp", _SDL_GAME_WINDOW_play_last_move_button_cb); 
     p_view->undo_button = p_view->buttons[p_view->button_count-1];
-    SDL_GAME_WINDOW_add_button(p_view, "./graphics/quit.bmp", NULL, _SDL_GAME_WINDOW_play_quit_button_cb); 
+    success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/quit.bmp", NULL, _SDL_GAME_WINDOW_play_quit_button_cb); 
+    
+    if (window == NULL || renderer == NULL || p_view->pieces_texture_white == NULL || p_view->pieces_texture_black == NULL
+            || p_view->buttons == NULL || p_view->bg_texture == NULL || (!success)) 
+    {
+        SDL_GAME_WINDOW_destroy_view(p_view);
+        return NULL ;
+    }
+
     return p_view;
 }
 
-void SDL_GAME_WINDOW_add_button(SDL_GAME_WINDOW_view_t* p_view, const char* active_texture_fn, const char* inactive_texture_fn, SDL_BUTTON_action_t (*cb)())
+BOOL SDL_GAME_WINDOW_add_button(SDL_GAME_WINDOW_view_t* p_view, const char* active_texture_fn, const char* inactive_texture_fn, SDL_BUTTON_action_t (*cb)())
 {
     assert(p_view->button_count < GAME_WINDOW_MAX_BUTTONS);
     SDL_Rect location = {.x=BUTTON_X, .y=BUTTON_PADDING + p_view->button_count * BUTTON_AREA_HEIGHT, .h=BUTTON_HEIGHT, .w=BUTTON_WIDTH};
     SDL_Texture * b_texture = SDL_UTILS_load_texture_from_bmp(active_texture_fn, p_view->renderer, FALSE);
     SDL_Texture* d_texture = SDL_UTILS_load_texture_from_bmp(inactive_texture_fn, p_view->renderer, FALSE);
-    p_view->buttons[p_view->button_count] = SDL_BUTTON_create(TRUE, cb, b_texture, d_texture, location, 0);
-    p_view->button_count++;
+    SDL_button_t* button = SDL_BUTTON_create(TRUE, cb, b_texture, d_texture, location, 0);
+    if (button == NULL)
+    {
+        return FALSE;
+    }
+    else
+    {
+        p_view->buttons[p_view->button_count] = button;
+        p_view->button_count++;
+        return TRUE;
+    }
 }
 
 void SDL_GAME_WINDOW_destroy_view(SDL_GAME_WINDOW_view_t* p_view)

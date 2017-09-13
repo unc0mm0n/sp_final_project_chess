@@ -115,16 +115,23 @@ void _SDL_render_section(SDL_SETTINGS_WINDOW_view_t* p_view, SDL_button_t** p_st
 SDL_SETTINGS_WINDOW_view_t* SDL_SETTINGS_WINDOW_create_view()
 {
     SDL_SETTINGS_WINDOW_view_t* p_view = malloc(sizeof(SDL_SETTINGS_WINDOW_view_t));
+    if (p_view == NULL)
+    {
+        return NULL;
+    }
+
     SDL_Window* window = SDL_CreateWindow("Tests", SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED, SETTINGS_WINDOW_W, SETTINGS_WINDOW_H, SDL_WINDOW_OPENGL);
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1,
             SDL_RENDERER_ACCELERATED);
     
-    if (p_view == NULL || window == NULL || renderer == NULL) 
+    p_view->buttons = malloc(sizeof(SDL_button_t*) * SETTINGS_WINDOW_MAX_BUTTONS);
+
+    if (p_view == NULL || window == NULL || renderer == NULL || p_view->buttons == NULL) 
     {
+        free(p_view->buttons);
         free(p_view);
-        //We first destroy the renderer
         SDL_DestroyRenderer(renderer); //NULL safe
         SDL_DestroyWindow(window); //NULL safe
         return NULL ;
@@ -133,7 +140,6 @@ SDL_SETTINGS_WINDOW_view_t* SDL_SETTINGS_WINDOW_create_view()
     p_view->window = window;
     p_view->renderer = renderer;
 
-    p_view->buttons = malloc(sizeof(SDL_button_t*) * SETTINGS_WINDOW_MAX_BUTTONS);
     p_view->button_count = 0;
     
     SDL_button_t** tmp = p_view->buttons;
