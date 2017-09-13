@@ -6,16 +6,18 @@
 #include "PIECE.h"
 #include "GAME.h"
 
-const SDL_Color GAME_WINDOW_DARK_SQ_C = {.r = 50, .g= 50, .b= 50, .a=255};
-const SDL_Color GAME_WINDOW_LIGHT_SQ_C = {.r = 205, .g= 205, .b= 205, .a=255};
-const SDL_Color GAME_WINDOW_BG_C = {.r = 155, .g= 155, .b= 155, .a=255};
-const SDL_Color GAME_WINDOW_ACTIVE_SQ_C = {.r = 0, .g = 255, .b = 255, .a=255};
-const SDL_Color GAME_WINDOW_CHECK_SQ_C = {.r = 255, .g= 100, .b= 100, .a=255};
+/***** Gloal variables *****/
 
-const SDL_Color GAME_WINDOW_MARKED_SQ_C = {.r = 255, .g= 255, .b= 255, .a=255};
-const SDL_Color GAME_WINDOW_MARKED_CASTLE_SQ_C = {.r = 0, .g= 0, .b= 0, .a=255};
-const SDL_Color GAME_WINDOW_MARKED_UNDER_ATTACK_SQ_C = {.r = 255, .g= 255, .b= 100, .a=255};
-const SDL_Color GAME_WINDOW_MARKED_CAPTURE_SQ_C = {.r = 100, .g= 255, .b= 100, .a=255};
+static const SDL_Color GAME_WINDOW_DARK_SQ_C = {.r = 50, .g= 50, .b= 50, .a=255};
+static const SDL_Color GAME_WINDOW_LIGHT_SQ_C = {.r = 205, .g= 205, .b= 205, .a=255};
+static const SDL_Color GAME_WINDOW_BG_C = {.r = 155, .g= 155, .b= 155, .a=255};
+static const SDL_Color GAME_WINDOW_ACTIVE_SQ_C = {.r = 0, .g = 255, .b = 255, .a=255};
+static const SDL_Color GAME_WINDOW_CHECK_SQ_C = {.r = 255, .g= 100, .b= 100, .a=255};
+
+static const SDL_Color GAME_WINDOW_MARKED_SQ_C = {.r = 255, .g= 255, .b= 255, .a=255};
+static const SDL_Color GAME_WINDOW_MARKED_CASTLE_SQ_C = {.r = 0, .g= 0, .b= 0, .a=255};
+static const SDL_Color GAME_WINDOW_MARKED_UNDER_ATTACK_SQ_C = {.r = 255, .g= 255, .b= 100, .a=255};
+static const SDL_Color GAME_WINDOW_MARKED_CAPTURE_SQ_C = {.r = 100, .g= 255, .b= 100, .a=255};
 
 /***** Private methods *****/
 
@@ -132,6 +134,7 @@ void _SDL_GAME_WINDOW_draw_piece_at_rect(SDL_GAME_WINDOW_view_t* p_view, PIECE_T
     }
 }
 
+/***** Public functions *****/
 SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
 {
     SDL_GAME_WINDOW_view_t* p_view = malloc(sizeof(SDL_GAME_WINDOW_view_t));

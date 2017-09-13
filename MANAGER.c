@@ -5,6 +5,8 @@
 #include "MANAGER.h"
 #include "AI.h"
 
+/***** Private functions *****/
+
 /**
  * Handle a game loop iteration in the MANAGER_STATE_SETTINGS 
  * state.
@@ -79,6 +81,12 @@ void _MANAGER_handle_pre_play(MANAGER_managed_game_t *p_a_manager)
     p_a_manager->state          = MANAGER_STATE_PLAY;
 }
 
+/**
+ * handle the play state.
+ * Ask the correct agent for a MANAGER_MOVE_COMMAND and handle it. 
+ * 
+ * @param p_a_manager pointer to managed game
+ */
 void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
 {
     MANAGER_agent_play_command_response_t response;
@@ -216,6 +224,8 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
 
     p_a_manager->play_agents[game_current_player].handle_play_command_response(command, response);
 }
+
+/***** Public functions *****/
 
 MANAGER_managed_game_t* MANAGER_new_managed_game(MANAGER_settings_agent_t settings_agent, void (*quit)(GAME_RESULT_E result))
 {

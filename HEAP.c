@@ -4,6 +4,7 @@
 
 #include "HEAP.h"
 
+/***** Private functions *****/
 /** swap positions of two elements of the heap */
 void _HEAP_swap(HEAP_t* p_heap, size_t f_idx, size_t s_idx)
 {
@@ -64,6 +65,8 @@ void _HEAP_bubble_up(HEAP_t* p_heap, size_t idx)
         _HEAP_bubble_up(p_heap, parent_idx);
     }
 }
+
+/***** Public functions *****/
 
 HEAP_t* HEAP_create_heap(size_t max_size)
 {

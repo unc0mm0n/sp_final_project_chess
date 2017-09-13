@@ -10,15 +10,15 @@
 #include "CLI.h"
 #include "HEAP.h"
 
+/****** global variables *****/
 static int gs_calcs;
 static BOOL gs_print = FALSE; // if TRUE, will print moves.
 static int gs_move_score; // used to keep default order if no score function is given.
 
-/* sadly in C we don't have partial functions, so we have 5 different agents.
- * On the bright side this is a better way to do this if we would ever want to increase
- * variety between difficulties
- */
 
+/***** private functions *****/
+
+// completely free a heap_blocks struct
 void _AI_free_heap_blocks(AI_heap_blocks_t* p_hb)
 {
     HEAP_free_heap(p_hb->p_heap);
@@ -29,6 +29,7 @@ void _AI_free_heap_blocks(AI_heap_blocks_t* p_hb)
     free(p_hb);
 }
 
+// calculate position score based on heuristic for lower difficulties
 int _AI_calculate_score_heuristic(const GAME_board_t* p_board, COLOR max_player)
 {
     GAME_RESULT_E result = GAME_get_result(p_board);
@@ -74,6 +75,7 @@ int _AI_calculate_score_heuristic(const GAME_board_t* p_board, COLOR max_player)
     return score;
 }
 
+// calculate position score based on heuristic for expert difficulty
 int _AI_expert_calculate_score_heuristic(const GAME_board_t* p_board, COLOR max_player)
 {
     GAME_RESULT_E result = GAME_get_result(p_board);
@@ -158,6 +160,7 @@ int _AI_expert_calculate_score_heuristic(const GAME_board_t* p_board, COLOR max_
     return score;
 }
 
+// calculate move score (which decides move order) for lower difficulties
 int _AI_default_move_score(const GAME_move_analysis_t* analysis)
 {
     assert(analysis->verdict == GAME_MOVE_VERDICT_LEGAL); // just so there are no complains of unused variables
@@ -165,6 +168,7 @@ int _AI_default_move_score(const GAME_move_analysis_t* analysis)
     return gs_move_score;
 }
 
+// calculate move score (which decides move order) for expert difficulty
 int _AI_expert_move_score(const GAME_move_analysis_t* analysis)
 {
     int base_score = 0;
@@ -186,8 +190,8 @@ int _AI_expert_move_score(const GAME_move_analysis_t* analysis)
         base_score -= 1; // we don't want to be threatned, if possible.
     }
 
-    // finally we tart from moves from the center to the center.
-    base_score -= abs(4-SQ_TO_FILE(analysis->move.from)) + abs(4-SQ_TO_RANK(analysis->move.from));
+    // finally we start from moves from the edge to the center.
+    base_score += abs(4-SQ_TO_FILE(analysis->move.from)) + abs(4-SQ_TO_RANK(analysis->move.from));
     base_score -= 2 * (abs(4-SQ_TO_FILE(analysis->move.to)) + abs(4-SQ_TO_RANK(analysis->move.to)));
     return base_score;
 }
@@ -280,6 +284,11 @@ AI_move_score_t _AI_minimax(GAME_board_t* p_board, int depth, int a, int b, int 
     return v;
 }
 
+/** prompt commands for the play agent.
+ * sadly in C we don't have partial functions, so we have 5 different agents.
+ * On the bright side this is a better way to do this if we would ever want to increase
+ * variety between difficulties
+ */
 MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_board, AI_DIFFICULTY_E a_difficulty, BOOL can_undo)
 {
     if (can_undo != FALSE)
@@ -355,6 +364,7 @@ MANAGER_agent_play_command_t _AI_prompt_play_command_expert(const GAME_board_t* 
     return _AI_prompt_play_command(p_board, AI_DIFFICULTY_EXPERT, can_undo);
 }
 
+// handle command for the play agent. It's main job is to print if printing is enabled
 void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response)
 {
     GAME_RESULT_E game_result;
@@ -430,6 +440,7 @@ void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
     return;
 }
 
+/***** Public functions *****/
 MANAGER_play_agent_t AI_get_play_agent(AI_DIFFICULTY_E a_difficulty)
 {
     srand(time(NULL));

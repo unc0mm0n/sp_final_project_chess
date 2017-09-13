@@ -1,6 +1,9 @@
 #include "SDL_MAIN_WINDOW.h"
 #include <assert.h>
 
+/***** Private functions *****/
+
+/** Button callbacks **/
 SDL_BUTTON_action_t _SDL_MAIN_WINDOW_new_game_button_cb()
 {
     SDL_BUTTON_action_t cmd;
@@ -26,6 +29,9 @@ SDL_BUTTON_action_t _SDL_MAIN_WINDOW_quit_button_cb()
     cmd.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_QUIT;
     return cmd;
 }
+
+/***** Public functions *****/
+
 SDL_MAIN_WINDOW_view_t* SDL_MAIN_WINDOW_create_view()
 {
     SDL_MAIN_WINDOW_view_t* p_view = malloc(sizeof(SDL_MAIN_WINDOW_view_t));

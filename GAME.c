@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <stdio.h> // tmp
 
 #include "GAME.h"
 #include "CLI.h"
+
+/***** Private functions *****/
 /**
- * private function to initialize a new board
+ * Initialize a new board pieces
  */
 void _GAME_init_pieces(GAME_board_t* p_board)
 {
@@ -34,6 +35,9 @@ void _GAME_init_pieces(GAME_board_t* p_board)
     memcpy(p_board->pieces, init_pieces, sizeof(p_board->pieces));
 }
 
+/**
+ * Initialize a new board colors
+ */
 void _GAME_init_color(GAME_board_t* p_board)
 {
     int B = BLACK;
@@ -54,9 +58,6 @@ void _GAME_init_color(GAME_board_t* p_board)
     memcpy (p_board->colors, init_colors, sizeof(p_board->colors));
 }
 
-#define PRUNE(_cond_,_move_,_verdict_) if(!(_cond_)){(_move_).verdict = _verdict_; return (_move_);}   // helper to PRUNE moves with given verdict.
-#define PRUNE_ILLEGAL(_cond_,_move_) PRUNE(_cond_, _move_, GAME_MOVE_VERDICT_ILLEGAL_MOVE);   // helper to PRUNE moves with the ILLEGAL_MOVE verdict.
-//#define PRUNE_ILLEGAL(cond,move) assert(cond); // debug PRUNE_ILLEGAL
 
 /**
  * Return true if the piece can theoretically move there on an 
@@ -121,8 +122,6 @@ BOOL _GAME_no_moves(const GAME_board_t * p_a_board)
 
             if (p_moves != NULL)
             {
-//                printf("Non empty, move verdict: %d", p_moves[0].verdict);
-//                printf("Move: %x %x", p_moves[0].move.from, p_moves[0].move.to);
                 if (p_moves[0].verdict == GAME_MOVE_VERDICT_LEGAL)
                 {
                     free(p_moves);
@@ -179,6 +178,9 @@ void _GAME_update_castle_bm(int * p_a_castle_bm, GAME_move_t a_move)
     }
 
 }
+
+#define PRUNE(_cond_,_move_,_verdict_) if(!(_cond_)){(_move_).verdict = _verdict_; return (_move_);}   // helper to PRUNE moves with given verdict.
+#define PRUNE_ILLEGAL(_cond_,_move_) PRUNE(_cond_, _move_, GAME_MOVE_VERDICT_ILLEGAL_MOVE);   // helper to PRUNE moves with the ILLEGAL_MOVE verdict.
 
 /**
  * Private function to analayze if move corresponds to 
@@ -291,6 +293,8 @@ GAME_move_analysis_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_mo
 
     return move_analysis;
 }
+
+/***** Public functions *****/
 
 GAME_board_t * GAME_new_board()
 {

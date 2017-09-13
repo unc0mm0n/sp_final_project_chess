@@ -1,6 +1,10 @@
 #include "SDL_SETTINGS_WINDOW.h"
 #include <assert.h>
 
+/***** Private functiosn *****/
+
+/** Button callbacks **/
+
 SDL_BUTTON_action_t _SDL_SETTINGS_WINDOW_back_button_cb()
 { 
     SDL_BUTTON_action_t cmd;
@@ -105,6 +109,8 @@ void _SDL_render_section(SDL_SETTINGS_WINDOW_view_t* p_view, SDL_button_t** p_st
         p_start++;
     }
 }
+
+/***** Public functions *****/
 
 SDL_SETTINGS_WINDOW_view_t* SDL_SETTINGS_WINDOW_create_view()
 {

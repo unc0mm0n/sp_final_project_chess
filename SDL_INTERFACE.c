@@ -2,8 +2,13 @@
 
 #include "SDL_INTERFACE.h"
 
+/***** Global variables *****/
+
 static SDL_INTERFACE_manager_t* sdl_manager = NULL; // a singleton global sdl manager
 
+/***** Public functions *****/
+
+/** agent callbacks **/
 MANAGER_agent_play_command_t _SDL_INTERFACE_prompt_play(const GAME_board_t* p_board, BOOL can_undo)
 {
     assert(sdl_manager != NULL && sdl_manager->state == SDL_INTERFACE_STATE_GAME); // make sure init was called and game started
@@ -96,6 +101,7 @@ void _SDL_INTERFACE_handle_settings_command_response(MANAGER_agent_settings_comm
     }
 }
 
+/***** Public functions *****/
 void SDL_INTERFACE_init()
 {
 

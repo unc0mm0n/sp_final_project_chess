@@ -16,8 +16,6 @@ SETTINGS_settings_t * SETTINGS_new_settings()
     return p_settings;
 }
 
-BOOL SETTINGS_reset_to_default(SETTINGS_settings_t * p_a_settings);
-
 void SETTINGS_free_settings(SETTINGS_settings_t* p_a_settings)
 {
 
