@@ -6,6 +6,17 @@
 #include "PIECE.h"
 #include "GAME.h"
 
+const SDL_Color GAME_WINDOW_DARK_SQ_C = {.r = 50, .g= 50, .b= 50, .a=255};
+const SDL_Color GAME_WINDOW_LIGHT_SQ_C = {.r = 205, .g= 205, .b= 205, .a=255};
+const SDL_Color GAME_WINDOW_BG_C = {.r = 155, .g= 155, .b= 155, .a=255};
+const SDL_Color GAME_WINDOW_ACTIVE_SQ_C = {.r = 0, .g = 255, .b = 255, .a=255};
+const SDL_Color GAME_WINDOW_CHECK_SQ_C = {.r = 255, .g= 100, .b= 100, .a=255};
+
+const SDL_Color GAME_WINDOW_MARKED_SQ_C = {.r = 255, .g= 255, .b= 255, .a=255};
+const SDL_Color GAME_WINDOW_MARKED_CASTLE_SQ_C = {.r = 0, .g= 0, .b= 0, .a=255};
+const SDL_Color GAME_WINDOW_MARKED_UNDER_ATTACK_SQ_C = {.r = 255, .g= 255, .b= 100, .a=255};
+const SDL_Color GAME_WINDOW_MARKED_CAPTURE_SQ_C = {.r = 100, .g= 255, .b= 100, .a=255};
+
 SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_new_game_button_cb()
 {
     SDL_BUTTON_action_t cmd;
@@ -41,6 +52,58 @@ SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_quit_button_cb()
 square _SDL_GAME_WINDOW_get_sq_from_x_y(int x, int y)
 {
     return SQ_FROM_FILE_RANK( (x - BOARD_OFFSET_H) / CELL_SIZE, 7 - (y / CELL_SIZE));
+}
+
+PIECE_TYPE_E _SDL_GAME_WINDOW_prompt_promote(SDL_GAME_WINDOW_view_t* p_view)
+{
+    SDL_MessageBoxButtonData buttons[PIECE_TYPE_MAX];
+    int cnt = 0;
+
+    for (PIECE_TYPE_E i=PIECE_TYPE_EMPTY; i < PIECE_TYPE_MAX; i++)
+    {
+        PIECE_desc_t desc = PIECE_desc_lut[i];
+        if (desc.can_promote_to)
+        {
+            buttons[cnt].flags = SDL_MESSAGEBOX_INFORMATION;
+            buttons[cnt].buttonid = i;
+            buttons[cnt].text = desc.name;
+            cnt++;
+        }
+    }
+
+    const SDL_MessageBoxColorScheme colorScheme = {
+        { /* .colors (.r, .g, .b) */
+            /* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
+            { 150,  150, 150 },
+            /* [SDL_MESSAGEBOX_COLOR_TEXT] */
+            { 255, 255, 255 },
+            /* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
+            { 0, 0, 0 },
+            /* [SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND] */
+            { 0, 0, 0 },
+            /* [SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED] */
+            { 150, 150, 150 }
+        }
+    };
+    const SDL_MessageBoxData messageboxdata = {
+        SDL_MESSAGEBOX_INFORMATION, /* .flags */
+        p_view->window, /* .window */
+        "Promote", /* .title */
+        "Please choose a piece to promote:", /* .message */
+        cnt, /* .numbuttons */
+        buttons, /* .buttons */
+        &colorScheme /* .colorScheme */
+    };
+    int buttonid;
+    if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0) {
+        printf("Error: displaying promotion message box");
+        return 0;
+    }
+    if (buttonid == -1) {
+        printf("Error: no selection");
+    }
+    
+    return buttonid;
 }
 
 SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
@@ -95,7 +158,8 @@ SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
     SDL_GAME_WINDOW_add_button(p_view, "./graphics/loadgame.bmp", NULL, NULL); 
     SDL_GAME_WINDOW_add_button(p_view, "./graphics/savegame.bmp", NULL, NULL); 
     SDL_GAME_WINDOW_add_button(p_view, "./graphics/mainmenu.bmp", NULL, _SDL_GAME_WINDOW_play_main_menu_button_cb); 
-    SDL_GAME_WINDOW_add_button(p_view, "./graphics/last_move.bmp", NULL, _SDL_GAME_WINDOW_play_last_move_button_cb); 
+    SDL_GAME_WINDOW_add_button(p_view, "./graphics/last_move.bmp", "./graphics/undo_i.bmp", _SDL_GAME_WINDOW_play_last_move_button_cb); 
+    p_view->undo_button = p_view->buttons[p_view->button_count-1];
     SDL_GAME_WINDOW_add_button(p_view, "./graphics/quit.bmp", NULL, _SDL_GAME_WINDOW_play_quit_button_cb); 
     return p_view;
 }
@@ -133,13 +197,13 @@ void SDL_GAME_WINDOW_destroy_view(SDL_GAME_WINDOW_view_t* p_view)
     free(p_view);
 }
 
-void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_t* p_board)
+void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_t* p_board, BOOL can_undo)
 {
     if(p_view == NULL){
         return;
     }
     SDL_Rect rec = { .x = BOARD_OFFSET_H, .y = 0, .w = BOARD_SIZE, .h = BOARD_SIZE };
-    SDL_SetRenderDrawColor(p_view->renderer, 150, 150, 150, 255);
+    SDL_SetRenderDrawColor(p_view->renderer, GAME_WINDOW_BG_C.r, GAME_WINDOW_BG_C.g, GAME_WINDOW_BG_C.b, GAME_WINDOW_BG_C.a);
     SDL_RenderClear(p_view->renderer);
     SDL_RenderCopy(p_view->renderer, p_view->bg_texture, NULL, &rec);
 
@@ -162,7 +226,11 @@ void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_
         }
         tmp++;
     }
+
     p_view->fixed_castle = TRUE;
+
+    SDL_Color sq_col;
+
     for (int rank = 0; rank < NUM_RANKS; rank++)
     {
         for (int file = 0; file < NUM_FILES; file++)
@@ -170,38 +238,63 @@ void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_
             rec.x = BOARD_OFFSET_H + file * CELL_SIZE;
             rec.y = (7 - rank) * CELL_SIZE;
 
+            if ((rank + file) % 2)
+            {
+                sq_col = GAME_WINDOW_DARK_SQ_C;
+            } 
+            else
+            {
+                sq_col = GAME_WINDOW_LIGHT_SQ_C;
+            }
+
             square sq = SQ_FROM_FILE_RANK(file,rank);
-            int sq_col = 50 + 155 * ((rank + file) & 1);
 
             tmp = p_view->marked_moves;
+            int color = p_board->colors[sq];
+            PIECE_TYPE_E piece = p_board->pieces[sq];
+            
             while (tmp != NULL && tmp->verdict == GAME_MOVE_VERDICT_LEGAL)
             {
                 if (sq == tmp->move.to)
                 {
                     if ((tmp->special_bm & GAME_SPECIAL_CASTLE) > 0)
                     {
-                        sq_col = 0x0;
+                        sq_col = GAME_WINDOW_MARKED_CASTLE_SQ_C;
+                    }
+                    else if (p_view->marked_hints && (tmp->special_bm & GAME_SPECIAL_UNDER_ATTACK) > 0)
+                    {
+                        sq_col = GAME_WINDOW_MARKED_UNDER_ATTACK_SQ_C;
+                    }
+                    else if (p_view->marked_hints && (tmp->special_bm & GAME_SPECIAL_CAPTURE) > 0)
+                    {
+                        sq_col = GAME_WINDOW_MARKED_CAPTURE_SQ_C;
                     }
                     else
                     {
-                        sq_col = 0xFF;
+                        sq_col = GAME_WINDOW_MARKED_SQ_C;
                     }
                     break;
                 }
                 tmp++;
             }
+
+            if (p_board->pieces[sq] == PIECE_TYPE_KING && GAME_is_checked(p_board, color))
+            {
+                sq_col = GAME_WINDOW_CHECK_SQ_C;
+            }
             if (sq == p_view->active_sq)
             {
-                SDL_SetRenderDrawColor(p_view->renderer, GAME_WINDOW_ACTIVE_SQ_COLOR, 255);
+                sq_col = GAME_WINDOW_ACTIVE_SQ_C;
             }
-            else
-            {
-                SDL_SetRenderDrawColor(p_view->renderer, sq_col, sq_col, sq_col, 255);
-            }
-            int color = p_board->colors[sq];
 
+            SDL_SetRenderDrawColor(p_view->renderer, sq_col.r, sq_col.g, sq_col.b, sq_col.a);
             SDL_RenderFillRect(p_view->renderer, &rec);
-            PIECE_TYPE_E piece = p_board->pieces[sq];
+            
+            if (sq == p_view->active_sq)
+            {
+                continue; // do not draw piece on active SQ
+            }
+
             switch (color)
             {
                 case BLACK:
@@ -218,6 +311,41 @@ void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_
                     break;
             }
         }
+    }
+
+    if (p_view->active_sq != GAME_WINDOW_NO_ACTIVE_SQ)
+    {
+        SDL_GetMouseState(&(rec.x), &(rec.y)); // draw piece in mouse position instead of square
+        rec.x -= CELL_SIZE / 2; // centralize piece on mouse
+        rec.y -= CELL_SIZE / 2;
+
+        int color = p_board->colors[p_view->active_sq];
+
+        PIECE_TYPE_E piece = p_board->pieces[p_view->active_sq];
+        switch (color)
+        {
+            case BLACK:
+                {
+                    SDL_RenderCopy(p_view->renderer, p_view->pieces_texture_black[piece], NULL, &rec);
+                    break;
+                }
+            case WHITE:
+                {
+                    SDL_RenderCopy(p_view->renderer, p_view->pieces_texture_white[piece], NULL, &rec);
+                    break;
+                }
+            default:
+                break;
+        }
+    }
+
+    if (!can_undo)
+    {
+        p_view->undo_button->is_active = FALSE;
+    }
+    else
+    {
+        p_view->undo_button->is_active = TRUE;
     }
 
     for (int i=0; i < p_view->button_count; i++)
@@ -260,6 +388,13 @@ SDL_BUTTON_action_t SDL_GAME_WINDOW_handle_event(SDL_GAME_WINDOW_view_t* p_view,
                         GAME_move_t move = {.from = p_view->active_sq, .to = sq, .promote = PIECE_TYPE_QUEEN};
 
                         cmd.data.move = move;
+                        // handle promotion attempts by prompting for piece
+                        if (p_board->pieces[p_view->active_sq] == PIECE_TYPE_PAWN 
+                                && SQ_TO_RANK(sq) == LAST_RANK(GAME_current_player(p_board))
+                                && SQ_TO_RANK(p_view->active_sq) == PAWN_RANK(OTHER_COLOR(GAME_current_player(p_board))))
+                        {
+                            cmd.data.move.promote = _SDL_GAME_WINDOW_prompt_promote(p_view);
+                        }
                     }
                 }
                 p_view->active_sq = GAME_WINDOW_NO_ACTIVE_SQ;

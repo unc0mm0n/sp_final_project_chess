@@ -11,7 +11,7 @@
 #include "DEFS.h"
 
 #define GAME_BOARD_ARR_SIZE     (128)  // Size of board arrays.
-#define GAME_HISTORY_SIZE       (200)  // counted in half-moves, which is 1 player move.
+#define GAME_HISTORY_SIZE       (400)  // counted in half-moves, which is 1 player move.
                                        // enough to hold the entire game. The player limitations  on undos
                                        // should be enforced by the manager (and do not apply to the AI during
                                        // calculations).

@@ -280,8 +280,12 @@ AI_move_score_t _AI_minimax(GAME_board_t* p_board, int depth, int a, int b, int 
     return v;
 }
 
-MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_board, AI_DIFFICULTY_E a_difficulty)
+MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_board, AI_DIFFICULTY_E a_difficulty, BOOL can_undo)
 {
+    if (can_undo != FALSE)
+    {
+        can_undo = FALSE;
+    }
 
     MANAGER_agent_play_command_t command;
     GAME_board_t * p_board_copy = GAME_copy_board(p_a_board); // do the testing on a copy of the board
@@ -323,32 +327,32 @@ MANAGER_agent_play_command_t _AI_prompt_play_command(const GAME_board_t* p_a_boa
     return command;
 }
 
-MANAGER_agent_play_command_t _AI_prompt_play_command_noob(const GAME_board_t* p_board)
+MANAGER_agent_play_command_t _AI_prompt_play_command_noob(const GAME_board_t* p_board, BOOL can_undo)
 {
-    return _AI_prompt_play_command(p_board, AI_DIFFICULTY_NOOB);
+    return _AI_prompt_play_command(p_board, AI_DIFFICULTY_NOOB, can_undo);
 }
 
 
-MANAGER_agent_play_command_t _AI_prompt_play_command_easy(const GAME_board_t* p_board)
+MANAGER_agent_play_command_t _AI_prompt_play_command_easy(const GAME_board_t* p_board, BOOL can_undo)
 {
-    return _AI_prompt_play_command(p_board, AI_DIFFICULTY_EASY);
+    return _AI_prompt_play_command(p_board, AI_DIFFICULTY_EASY, can_undo);
 }
 
-MANAGER_agent_play_command_t _AI_prompt_play_command_moderate(const GAME_board_t* p_board)
+MANAGER_agent_play_command_t _AI_prompt_play_command_moderate(const GAME_board_t* p_board, BOOL can_undo)
 {
-    return _AI_prompt_play_command(p_board, AI_DIFFICULTY_MODERATE);
-}
-
-
-MANAGER_agent_play_command_t _AI_prompt_play_command_hard(const GAME_board_t* p_board)
-{
-    return _AI_prompt_play_command(p_board, AI_DIFFICULTY_HARD);
+    return _AI_prompt_play_command(p_board, AI_DIFFICULTY_MODERATE, can_undo);
 }
 
 
-MANAGER_agent_play_command_t _AI_prompt_play_command_expert(const GAME_board_t* p_board)
+MANAGER_agent_play_command_t _AI_prompt_play_command_hard(const GAME_board_t* p_board, BOOL can_undo)
 {
-    return _AI_prompt_play_command(p_board, AI_DIFFICULTY_EXPERT);
+    return _AI_prompt_play_command(p_board, AI_DIFFICULTY_HARD, can_undo);
+}
+
+
+MANAGER_agent_play_command_t _AI_prompt_play_command_expert(const GAME_board_t* p_board, BOOL can_undo)
+{
+    return _AI_prompt_play_command(p_board, AI_DIFFICULTY_EXPERT, can_undo);
 }
 
 void _AI_handle_play_command_response(MANAGER_agent_play_command_t command, MANAGER_agent_play_command_response_t response)

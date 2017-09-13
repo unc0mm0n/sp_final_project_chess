@@ -35,7 +35,7 @@ SETTINGS_CHANGE_RESULT_E SETTINGS_change_setting(SETTINGS_settings_t* p_a_settin
     {
         case SETTINGS_SETTING_GAME_MODE:
             {
-                if (a_new_value != 1 && a_new_value != 2 && a_new_value != 66)
+                if (a_new_value != 1 && a_new_value != 2)
                 {
                     return SETTINGS_CHANGE_RESULT_INVALID_MODE;
                 }

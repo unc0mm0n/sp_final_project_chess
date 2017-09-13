@@ -205,10 +205,10 @@ MANAGER_agent_settings_command_t CLI_prompt_settings_command(const SETTINGS_sett
     return command;
 }
 
-MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t *p_a_board)
+MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t *p_a_board, BOOL can_undo)
 {
     COLOR player = GAME_current_player(p_a_board);
-
+    assert(can_undo >= 0);
     if (!gs_board_printed)
     {
         CLI_print_board(p_a_board);
@@ -225,7 +225,8 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t *p_a_boa
     if (gs_command_buffer[0] == '\n')
     {
         command.type = MANAGER_PLAY_COMMAND_TYPE_NONE;
-    } else
+    }
+    else
     {
         token = strtok(gs_command_buffer, SPLIT_TOKEN);
         if (strcmp(token, "move") == 0)
@@ -269,20 +270,25 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t *p_a_boa
             }
             command.data.move = move;
 
-        } else if (strcmp(token, "undo") == 0)
+        } 
+        else if (strcmp(token, "undo") == 0)
         {
             command.type = MANAGER_PLAY_COMMAND_TYPE_UNDO;
-        } else if (strcmp(token, "quit") == 0)
+        } 
+        else if (strcmp(token, "quit") == 0)
         {
             command.type = MANAGER_PLAY_COMMAND_TYPE_QUIT;
-        } else if (strcmp(token, "reset") == 0)
+        } 
+        else if (strcmp(token, "reset") == 0)
         {
             command.type = MANAGER_PLAY_COMMAND_TYPE_RESET;
-        } else if (strcmp(token, "save") == 0)
+        }
+        else if (strcmp(token, "save") == 0)
         {
             command.type = MANAGER_PLAY_COMMAND_TYPE_SAVE;
             assert(0); // not yet supported.
-        } else if (strcmp(token, "get_moves") == 0)
+        }
+        else if (strcmp(token, "get_moves") == 0)
         {
             command.type = MANAGER_PLAY_COMMAND_TYPE_GET_MOVES;
             square sq_from = _CLI_parse_square(strtok(NULL, SPLIT_TOKEN));
@@ -293,7 +299,8 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t *p_a_boa
                 return command;
             }
             command.data.sq = sq_from;
-        } else if (strcmp(token, "castle") == 0)
+        }
+        else if (strcmp(token, "castle") == 0)
         {
             command.type = MANAGER_PLAY_COMMAND_TYPE_CASTLE;
             square sq_from = _CLI_parse_square(strtok(NULL, SPLIT_TOKEN));
@@ -304,7 +311,8 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t *p_a_boa
                 return command;
             }
             command.data.sq = sq_from;
-        } else
+        }
+        else
         {
             printf("Invalid command.\n");
             command.type = MANAGER_PLAY_COMMAND_TYPE_NONE;

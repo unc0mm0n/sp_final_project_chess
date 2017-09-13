@@ -49,7 +49,7 @@ MANAGER_agent_settings_command_t CLI_prompt_settings_command(const SETTINGS_sett
  *
  * @param p_a_board the board on which the user should play.
  */
-MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t* p_a_board);
+MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t* p_a_board, BOOL can_undo);
 
 /**
  * Handle the result of a settings command

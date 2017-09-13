@@ -2,7 +2,6 @@
 #include "MANAGER.h"
 #include "AI.h"
 #include "SDL_INTERFACE.h"
-#include "SDL_GAME_WINDOW.h"
 
 int main(int argv, char * argc[])
 {

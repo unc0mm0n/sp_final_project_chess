@@ -4,7 +4,7 @@
 
 static SDL_INTERFACE_manager_t* sdl_manager = NULL; // a singleton global sdl manager
 
-MANAGER_agent_play_command_t _SDL_INTERFACE_prompt_play(const GAME_board_t* p_board)
+MANAGER_agent_play_command_t _SDL_INTERFACE_prompt_play(const GAME_board_t* p_board, BOOL can_undo)
 {
     assert(sdl_manager != NULL && sdl_manager->state == SDL_INTERFACE_STATE_GAME); // make sure init was called and game started
     
@@ -14,7 +14,7 @@ MANAGER_agent_play_command_t _SDL_INTERFACE_prompt_play(const GAME_board_t* p_bo
     act.action = SDL_BUTTON_ACTION_NONE;
     do // handle events until we find a command to send
     {
-        SDL_GAME_WINDOW_draw_view(sdl_manager->game_window, p_board);
+        SDL_GAME_WINDOW_draw_view(sdl_manager->game_window, p_board, can_undo);
         SDL_WaitEvent(&event);
         act = SDL_GAME_WINDOW_handle_event(sdl_manager->game_window, &event, p_board);
         
@@ -75,11 +75,30 @@ void _SDL_INTERFACE_handle_play_command_response(MANAGER_agent_play_command_t co
     if (command.type == MANAGER_PLAY_COMMAND_TYPE_GET_MOVES && response.has_output)
     {
         sdl_manager->game_window->marked_moves = response.output.get_moves_data.moves;
+        sdl_manager->game_window->marked_hints = response.output.get_moves_data.display_hints;
         sdl_manager->game_window->fixed_castle = FALSE;
     }
     else if (command.type == MANAGER_PLAY_COMMAND_TYPE_RESET)
     { 
         SDL_INTERFACE_change_state(sdl_manager, SDL_INTERFACE_STATE_MAIN_MENU);
+    }
+    else if (command.type == MANAGER_PLAY_COMMAND_TYPE_MOVE && response.has_output)
+    {
+        GAME_RESULT_E game_result = response.output.move_data.game_result;
+        switch (game_result)
+        {
+            case GAME_RESULT_PLAYING:
+                break;
+            case GAME_RESULT_WHITE_WINS:
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", "Game Over! White Wins!", NULL);
+                break;
+            case GAME_RESULT_BLACK_WINS:
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", "Game Over! Black Wins!", NULL);
+                break;
+            case GAME_RESULT_DRAW:
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", "Game Over! It's a stalemate!", NULL);
+                break;
+        }
     }
 }
         
@@ -159,6 +178,10 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
             SDL_GAME_WINDOW_destroy_view(p_manager->game_window);
             p_manager->game_window = NULL;
             break;
+        case SDL_INTERFACE_STATE_LOAD:
+            assert(0);
+        default:
+            break;
     }
 
     p_manager->state = new_state;
@@ -189,6 +212,11 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
                 p_manager->state = SDL_INTERFACE_STATE_QUIT;            
             }
             break;
+        case SDL_INTERFACE_STATE_QUIT:
+            break;
+        case SDL_INTERFACE_STATE_LOAD:
+        case SDL_INTERFACE_STATE_INVALID:
+            assert(0);
     }
 
 }
