@@ -194,7 +194,7 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
             p_manager->main_window = SDL_MAIN_WINDOW_create_view();
             if (p_manager->main_window == NULL) // SDL or allocation error
             {
-                printf("Error: Unable to load main window\n");
+                printf("Error: Unable to load main window (%s)\n", SDL_GetError());
                 p_manager->state = SDL_INTERFACE_STATE_QUIT;            
             }
             break;
@@ -202,7 +202,7 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
             p_manager->settings_window = SDL_SETTINGS_WINDOW_create_view();
             if (p_manager->settings_window == NULL) // SDL or allocation error
             {
-                printf("Error: Unable to load settings window\n");
+                printf("Error: Unable to load settings window (%s)\n", SDL_GetError());
                 p_manager->state = SDL_INTERFACE_STATE_QUIT;            
             }
             break;
@@ -210,7 +210,7 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
             p_manager->game_window = SDL_GAME_WINDOW_create_view();
             if (p_manager->game_window == NULL) // SDL or allocation error
             {
-                printf("Error: Unable to load game window\n");
+                printf("Error: Unable to load game window(%s)\n", SDL_GetError());
                 p_manager->state = SDL_INTERFACE_STATE_QUIT;            
             }
             break;
