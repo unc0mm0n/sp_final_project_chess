@@ -111,7 +111,7 @@ void SDL_INTERFACE_init()
     }
 
     sdl_manager = malloc(sizeof(SDL_INTERFACE_manager_t));
-    sdl_manager->state = SDL_INTERFACE_STATE_INVALID; //tmp, should be: SDL_INTERFACE_STATE_MAIN_MENU;
+    sdl_manager->state = SDL_INTERFACE_STATE_INVALID;
 
     sdl_manager->game_window = NULL;
     sdl_manager->settings_window = NULL;

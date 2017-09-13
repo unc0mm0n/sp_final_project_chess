@@ -73,7 +73,7 @@ MANAGER_settings_agent_t CLI_get_settings_agent()
     MANAGER_settings_agent_t agent;
     agent.prompt_settings_command = CLI_prompt_settings_command;
     agent.handle_settigns_command_response = CLI_handle_settings_command_response;
-    agent.get_play_agent = CLI_get_play_agent; /*tmp Should be CLI_get_play_agent*/
+    agent.get_play_agent = CLI_get_play_agent;
 
     return agent;
 }
