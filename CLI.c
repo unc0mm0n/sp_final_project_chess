@@ -8,10 +8,14 @@
 #define MAX_INPUT_SIZE (1024)
 #define SPLIT_TOKEN ("\n\t\r ")
 
+/** Global variables **/
+
 // we allow ourselves more freedom with globals here as no more than one terminal CLI can run at a time anyway.
 static BOOL gs_board_printed; // evil global
 static BOOL gs_settings_intro_printed; // evil global
 static char gs_command_buffer[MAX_INPUT_SIZE]; // holds command
+
+/***** Private functions *****/
 
 // Parse a string into a square.
 square _CLI_parse_square(char *token)
@@ -55,6 +59,8 @@ BOOL _CLI_is_int(const char *str)
     }
     return (has_digits > 0); // We want to verify at least one character is a digit.
 }
+
+/***** Public functions *****/
 
 void CLI_handle_quit(GAME_RESULT_E result)
 {
@@ -156,19 +162,18 @@ MANAGER_agent_settings_command_t CLI_prompt_settings_command(const SETTINGS_sett
             token = strtok(NULL, SPLIT_TOKEN);
             if (!_CLI_is_int(token))
             {
-                command.type = MANAGER_SETTINGS_COMMAND_TYPE_NONE;
-                return command;
+                token = "-1"; // input not an integer
             }
             command.data.change_setting.value = atoi(token);
-        } else if (strcmp(token, "difficulty") == 0)
+        } 
+        else if (strcmp(token, "difficulty") == 0)
         {
             command.type = MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING;
             command.data.change_setting.setting = SETTINGS_SETTING_DIFFICULTY;
             token = strtok(NULL, SPLIT_TOKEN);
             if (!_CLI_is_int(token))
             {
-                command.type = MANAGER_SETTINGS_COMMAND_TYPE_NONE;
-                return command;
+                token = "-1"; // input not an integer
             }
             command.data.change_setting.value = atoi(token);
         } else if (strcmp(token, "user_color") == 0)
@@ -178,8 +183,7 @@ MANAGER_agent_settings_command_t CLI_prompt_settings_command(const SETTINGS_sett
             token = strtok(NULL, SPLIT_TOKEN);
             if (!_CLI_is_int(token))
             {
-                command.type = MANAGER_SETTINGS_COMMAND_TYPE_NONE;
-                return command;
+                token = "-1"; // Input not an integer
             }
             command.data.change_setting.value = atoi(token); // todo verify integer
         } else if (strcmp(token, "load") == 0)
@@ -364,10 +368,6 @@ void CLI_handle_settings_command_response(MANAGER_agent_settings_command_t comma
                 {
                     printf("Game mode is set to 2 players\n");
                 } 
-                else if (command.data.change_setting.value == 66)
-                {
-                    printf("Hidden mode unlocked!\n");
-                }
                 else
                 {
                     assert(0);
