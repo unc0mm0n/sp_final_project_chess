@@ -59,6 +59,7 @@ MANAGER_agent_settings_command_t _SDL_INTERFACE_prompt_settings(const SETTINGS_s
                 {
                     act.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
                     act.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_QUIT;
+					break;
                 }
             default:
                 {
