@@ -148,7 +148,7 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
             break;
         case MANAGER_PLAY_COMMAND_TYPE_GET_MOVES:
             response.has_output = TRUE;
-            response.output.get_moves_data.display_hints = p_a_manager->p_settings->difficulty <= AI_DIFFICULTY_EASY;
+            response.output.get_moves_data.display_hints = (p_a_manager->p_settings->game_mode == 1 && p_a_manager->p_settings->difficulty <= AI_DIFFICULTY_EASY);
             response.output.get_moves_data.player_color = game_current_player;
             response.output.get_moves_data.moves = GAME_gen_moves_from_sq(p_a_manager->p_board, command.data.sq);
             break;
@@ -217,7 +217,7 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
     p_a_manager->play_agents[game_current_player].handle_play_command_response(command, response);
 }
 
-MANAGER_managed_game_t* MANAGER_new_managed_game(MANAGER_settings_agent_t settings_agent, void (*quit)())
+MANAGER_managed_game_t* MANAGER_new_managed_game(MANAGER_settings_agent_t settings_agent, void (*quit)(GAME_RESULT_E result))
 {
     MANAGER_managed_game_t *p_manager = (MANAGER_managed_game_t *)malloc(sizeof(MANAGER_managed_game_t));
     assert(p_manager != NULL); // TODO: not assert here.
@@ -271,8 +271,8 @@ void MANAGER_start_game(MANAGER_managed_game_t *p_a_manager)
         }
     }
 
+    p_a_manager->handle_quit(GAME_get_result(p_a_manager->p_board));
     MANAGER_free_managed_game(p_a_manager);
-    p_a_manager->handle_quit();
     // State is now MANAGER_STATE_QUIT
 }
 

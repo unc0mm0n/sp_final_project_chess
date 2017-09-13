@@ -56,8 +56,12 @@ BOOL _CLI_is_int(const char *str)
     return (has_digits > 0); // We want to verify at least one character is a digit.
 }
 
-void CLI_handle_quit()
+void CLI_handle_quit(GAME_RESULT_E result)
 {
+    if (result == GAME_RESULT_PLAYING)
+    {
+        result = 0;
+    }
     // CLI doesn't allocate resources, therefore handling quit is easy.
     printf("Exiting...\n");
     return;

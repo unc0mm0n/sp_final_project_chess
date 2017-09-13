@@ -48,7 +48,7 @@ MANAGER_settings_agent_t SDL_INTERFACE_get_settings_agent();
 /**
  * Quit all SDL interface functions and free all resources
  */
-void SDL_handle_quit();
+void SDL_handle_quit(GAME_RESULT_E result);
 
 /**
  * Move the interface to a new state

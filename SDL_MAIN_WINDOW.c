@@ -107,6 +107,11 @@ SDL_BUTTON_action_t SDL_MAIN_WINDOW_handle_event(SDL_MAIN_WINDOW_view_t* p_view,
 {
     SDL_BUTTON_action_t act;
     act.action = SDL_BUTTON_ACTION_NONE;
+    if (event->type == SDL_QUIT) // X button pressed
+    {
+        act.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
+        act.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_QUIT;
+    }
     if (event->type == SDL_MOUSEBUTTONUP)
     {
         for (int i=0; i < p_view->button_count; i++)

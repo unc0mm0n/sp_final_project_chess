@@ -209,7 +209,7 @@ typedef struct MANAGER_managed_game_s
     SETTINGS_settings_t* p_settings;          // settings used in the game
     MANAGER_settings_agent_t settings_agent;           // agent used in settings state
     MANAGER_play_agent_t play_agents[NUM_PLAYERS]; // agent BLACK and agent WHITE will be called respectively
-    void (*handle_quit)();                         // Called when the manager quits and frees itself
+    void (*handle_quit)(GAME_RESULT_E result);                         // Called when the manager quits and frees itself
     int undo_count;                                // how many undos are available.
 
 } MANAGER_managed_game_t;

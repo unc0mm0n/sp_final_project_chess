@@ -17,6 +17,9 @@ const SDL_Color GAME_WINDOW_MARKED_CASTLE_SQ_C = {.r = 0, .g= 0, .b= 0, .a=255};
 const SDL_Color GAME_WINDOW_MARKED_UNDER_ATTACK_SQ_C = {.r = 255, .g= 255, .b= 100, .a=255};
 const SDL_Color GAME_WINDOW_MARKED_CAPTURE_SQ_C = {.r = 100, .g= 255, .b= 100, .a=255};
 
+/***** Private methods *****/
+
+// button callbacks
 SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_new_game_button_cb()
 {
     SDL_BUTTON_action_t cmd;
@@ -49,11 +52,13 @@ SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_quit_button_cb()
     return cmd;
 }
 
+// Get square based on board location clicked
 square _SDL_GAME_WINDOW_get_sq_from_x_y(int x, int y)
 {
     return SQ_FROM_FILE_RANK( (x - BOARD_OFFSET_H) / CELL_SIZE, 7 - (y / CELL_SIZE));
 }
 
+// Prompt the screen for a promoted piece
 PIECE_TYPE_E _SDL_GAME_WINDOW_prompt_promote(SDL_GAME_WINDOW_view_t* p_view)
 {
     SDL_MessageBoxButtonData buttons[PIECE_TYPE_MAX];
@@ -74,7 +79,7 @@ PIECE_TYPE_E _SDL_GAME_WINDOW_prompt_promote(SDL_GAME_WINDOW_view_t* p_view)
     const SDL_MessageBoxColorScheme colorScheme = {
         { /* .colors (.r, .g, .b) */
             /* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
-            { 150,  150, 150 },
+            { GAME_WINDOW_BG_C.r, GAME_WINDOW_BG_C.g, GAME_WINDOW_BG_C.b },
             /* [SDL_MESSAGEBOX_COLOR_TEXT] */
             { 255, 255, 255 },
             /* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
@@ -94,6 +99,7 @@ PIECE_TYPE_E _SDL_GAME_WINDOW_prompt_promote(SDL_GAME_WINDOW_view_t* p_view)
         buttons, /* .buttons */
         &colorScheme /* .colorScheme */
     };
+
     int buttonid;
     if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0) {
         printf("Error: displaying promotion message box");
@@ -102,8 +108,28 @@ PIECE_TYPE_E _SDL_GAME_WINDOW_prompt_promote(SDL_GAME_WINDOW_view_t* p_view)
     if (buttonid == -1) {
         printf("Error: no selection");
     }
-    
+
     return buttonid;
+}
+
+// draw given piece with given color at the given rectangle
+void _SDL_GAME_WINDOW_draw_piece_at_rect(SDL_GAME_WINDOW_view_t* p_view, PIECE_TYPE_E piece, COLOR color, SDL_Rect* rec)
+{
+    switch (color) // render piece
+    {
+        case BLACK:
+            {
+                SDL_RenderCopy(p_view->renderer, p_view->pieces_texture_black[piece], NULL, rec);
+                break;
+            }
+        case WHITE:
+            {
+                SDL_RenderCopy(p_view->renderer, p_view->pieces_texture_white[piece], NULL, rec);
+                break;
+            }
+        default:
+            break;
+    }
 }
 
 SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
@@ -238,7 +264,7 @@ void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_
             rec.x = BOARD_OFFSET_H + file * CELL_SIZE;
             rec.y = (7 - rank) * CELL_SIZE;
 
-            if ((rank + file) % 2)
+            if ((rank + file) % 2) // basic board colors
             {
                 sq_col = GAME_WINDOW_DARK_SQ_C;
             } 
@@ -249,11 +275,9 @@ void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_
 
             square sq = SQ_FROM_FILE_RANK(file,rank);
 
-            tmp = p_view->marked_moves;
-            int color = p_board->colors[sq];
-            PIECE_TYPE_E piece = p_board->pieces[sq];
-            
-            while (tmp != NULL && tmp->verdict == GAME_MOVE_VERDICT_LEGAL)
+            tmp = p_view->marked_moves; // iterate over marked moves
+
+            while (tmp != NULL && tmp->verdict == GAME_MOVE_VERDICT_LEGAL) // choose color for marked squares
             {
                 if (sq == tmp->move.to)
                 {
@@ -278,42 +302,30 @@ void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_
                 tmp++;
             }
 
-            if (p_board->pieces[sq] == PIECE_TYPE_KING && GAME_is_checked(p_board, color))
+            int color = p_board->colors[sq];
+            PIECE_TYPE_E piece = p_board->pieces[sq];
+
+            if (p_board->pieces[sq] == PIECE_TYPE_KING && GAME_is_checked(p_board, color)) // mark check
             {
                 sq_col = GAME_WINDOW_CHECK_SQ_C;
             }
-            if (sq == p_view->active_sq)
+            if (sq == p_view->active_sq) // mark active square
             {
                 sq_col = GAME_WINDOW_ACTIVE_SQ_C;
             }
 
             SDL_SetRenderDrawColor(p_view->renderer, sq_col.r, sq_col.g, sq_col.b, sq_col.a);
             SDL_RenderFillRect(p_view->renderer, &rec);
-            
-            if (sq == p_view->active_sq)
+
+            if (!(sq == p_view->active_sq)) // do not draw piece at active square
             {
-                continue; // do not draw piece on active SQ
+                _SDL_GAME_WINDOW_draw_piece_at_rect(p_view, piece, color, &rec);
             }
 
-            switch (color)
-            {
-                case BLACK:
-                    {
-                        SDL_RenderCopy(p_view->renderer, p_view->pieces_texture_black[piece], NULL, &rec);
-                        break;
-                    }
-                case WHITE:
-                    {
-                        SDL_RenderCopy(p_view->renderer, p_view->pieces_texture_white[piece], NULL, &rec);
-                        break;
-                    }
-                default:
-                    break;
-            }
         }
     }
 
-    if (p_view->active_sq != GAME_WINDOW_NO_ACTIVE_SQ)
+    if (p_view->active_sq != GAME_WINDOW_NO_ACTIVE_SQ) // render dragged piece
     {
         SDL_GetMouseState(&(rec.x), &(rec.y)); // draw piece in mouse position instead of square
         rec.x -= CELL_SIZE / 2; // centralize piece on mouse
@@ -322,24 +334,11 @@ void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_
         int color = p_board->colors[p_view->active_sq];
 
         PIECE_TYPE_E piece = p_board->pieces[p_view->active_sq];
-        switch (color)
-        {
-            case BLACK:
-                {
-                    SDL_RenderCopy(p_view->renderer, p_view->pieces_texture_black[piece], NULL, &rec);
-                    break;
-                }
-            case WHITE:
-                {
-                    SDL_RenderCopy(p_view->renderer, p_view->pieces_texture_white[piece], NULL, &rec);
-                    break;
-                }
-            default:
-                break;
-        }
+
+        _SDL_GAME_WINDOW_draw_piece_at_rect(p_view, piece, color, &rec);
     }
 
-    if (!can_undo)
+    if (!can_undo) // toggle undo button
     {
         p_view->undo_button->is_active = FALSE;
     }
@@ -348,7 +347,7 @@ void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_
         p_view->undo_button->is_active = TRUE;
     }
 
-    for (int i=0; i < p_view->button_count; i++)
+    for (int i=0; i < p_view->button_count; i++) // draw all buttons
     {
         SDL_BUTTON_render(p_view->buttons[i], p_view->renderer);
     }    
@@ -359,9 +358,15 @@ SDL_BUTTON_action_t SDL_GAME_WINDOW_handle_event(SDL_GAME_WINDOW_view_t* p_view,
 {
     MANAGER_agent_play_command_t cmd;
     SDL_BUTTON_action_t act;
+
     act.action = SDL_BUTTON_ACTION_NONE;
     cmd.type = MANAGER_PLAY_COMMAND_TYPE_NONE;
-    if(event->type == SDL_MOUSEBUTTONUP) //SDL_MouseButtonEvent
+    if (event->type == SDL_QUIT) // X button pressed
+    {
+        act.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+        cmd.type = MANAGER_PLAY_COMMAND_TYPE_QUIT;
+    }
+    else if(event->type == SDL_MOUSEBUTTONUP) //SDL_MouseButtonEvent
     {
         if (event->button.button == SDL_BUTTON_LEFT)
         {

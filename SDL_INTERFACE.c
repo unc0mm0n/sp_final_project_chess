@@ -7,7 +7,7 @@ static SDL_INTERFACE_manager_t* sdl_manager = NULL; // a singleton global sdl ma
 MANAGER_agent_play_command_t _SDL_INTERFACE_prompt_play(const GAME_board_t* p_board, BOOL can_undo)
 {
     assert(sdl_manager != NULL && sdl_manager->state == SDL_INTERFACE_STATE_GAME); // make sure init was called and game started
-    
+
     SDL_BUTTON_action_t act;
     SDL_Event event;
 
@@ -17,7 +17,7 @@ MANAGER_agent_play_command_t _SDL_INTERFACE_prompt_play(const GAME_board_t* p_bo
         SDL_GAME_WINDOW_draw_view(sdl_manager->game_window, p_board, can_undo);
         SDL_WaitEvent(&event);
         act = SDL_GAME_WINDOW_handle_event(sdl_manager->game_window, &event, p_board);
-        
+
     } while (act.action != SDL_BUTTON_ACTION_SEND_PLAY_CMD);
 
     return act.play_cmd; // return the command
@@ -33,38 +33,38 @@ MANAGER_agent_settings_command_t _SDL_INTERFACE_prompt_settings(const SETTINGS_s
     do // handle events until we find a command to send
     {
 
-    switch (sdl_manager->state)
-    {
-    case SDL_INTERFACE_STATE_MAIN_MENU:
-    {
-                
-        SDL_MAIN_WINDOW_draw_view(sdl_manager->main_window);
-        SDL_WaitEvent(&event);
-        act = SDL_MAIN_WINDOW_handle_event(sdl_manager->main_window, &event);
-        break;
-    }
-    case SDL_INTERFACE_STATE_SETTINGS:
-    {
-        SDL_SETTINGS_WINDOW_draw_view(sdl_manager->settings_window, p_settings);
-        SDL_WaitEvent(&event);
-        act = SDL_SETTINGS_WINDOW_handle_event(sdl_manager->settings_window, &event);
-        break;
-    }
-    case SDL_INTERFACE_STATE_QUIT:
-    {
-        act.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
-        act.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_QUIT;
-    }
-    default:
-    {
-        assert(0);
-        break;
-    }
-    }
-    if (act.action == SDL_BUTTON_ACTION_CHANGE_STATE)
-    {
-        SDL_INTERFACE_change_state(sdl_manager, act.new_state);
-    }
+        switch (sdl_manager->state)
+        {
+            case SDL_INTERFACE_STATE_MAIN_MENU:
+                {
+
+                    SDL_MAIN_WINDOW_draw_view(sdl_manager->main_window);
+                    SDL_WaitEvent(&event);
+                    act = SDL_MAIN_WINDOW_handle_event(sdl_manager->main_window, &event);
+                    break;
+                }
+            case SDL_INTERFACE_STATE_SETTINGS:
+                {
+                    SDL_SETTINGS_WINDOW_draw_view(sdl_manager->settings_window, p_settings);
+                    SDL_WaitEvent(&event);
+                    act = SDL_SETTINGS_WINDOW_handle_event(sdl_manager->settings_window, &event);
+                    break;
+                }
+            case SDL_INTERFACE_STATE_QUIT:
+                {
+                    act.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
+                    act.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_QUIT;
+                }
+            default:
+                {
+                    assert(0);
+                    break;
+                }
+        }
+        if (act.action == SDL_BUTTON_ACTION_CHANGE_STATE)
+        {
+            SDL_INTERFACE_change_state(sdl_manager, act.new_state);
+        }
     } while (act.action != SDL_BUTTON_ACTION_SEND_SETTINGS_CMD);
 
     return act.settings_cmd; // return the command
@@ -82,26 +82,8 @@ void _SDL_INTERFACE_handle_play_command_response(MANAGER_agent_play_command_t co
     { 
         SDL_INTERFACE_change_state(sdl_manager, SDL_INTERFACE_STATE_MAIN_MENU);
     }
-    else if (command.type == MANAGER_PLAY_COMMAND_TYPE_MOVE && response.has_output)
-    {
-        GAME_RESULT_E game_result = response.output.move_data.game_result;
-        switch (game_result)
-        {
-            case GAME_RESULT_PLAYING:
-                break;
-            case GAME_RESULT_WHITE_WINS:
-                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", "Game Over! White Wins!", NULL);
-                break;
-            case GAME_RESULT_BLACK_WINS:
-                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", "Game Over! Black Wins!", NULL);
-                break;
-            case GAME_RESULT_DRAW:
-                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", "Game Over! It's a stalemate!", NULL);
-                break;
-        }
-    }
 }
-        
+
 void _SDL_INTERFACE_handle_settings_command_response(MANAGER_agent_settings_command_t command, MANAGER_agent_settings_command_response_t response)
 {
     if (command.type == MANAGER_SETTINGS_COMMAND_TYPE_START_GAME)
@@ -117,10 +99,10 @@ void _SDL_INTERFACE_handle_settings_command_response(MANAGER_agent_settings_comm
 void SDL_INTERFACE_init()
 {
 
-	if (SDL_Init(SDL_INIT_VIDEO) < 0) { //SDL2 INIT
-		printf("ERROR: unable to init SDL: %s\n", SDL_GetError());
-		exit(-1);
-	}
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) { //SDL2 INIT
+        printf("ERROR: unable to init SDL: %s\n", SDL_GetError());
+        exit(-1);
+    }
 
     sdl_manager = malloc(sizeof(SDL_INTERFACE_manager_t));
     sdl_manager->state = SDL_INTERFACE_STATE_INVALID; //tmp, should be: SDL_INTERFACE_STATE_MAIN_MENU;
@@ -149,12 +131,26 @@ MANAGER_settings_agent_t SDL_INTERFACE_get_settings_agent()
     return agent;
 }
 
-void SDL_handle_quit()
+void SDL_handle_quit(GAME_RESULT_E result)
 {
+    switch (result)
+    {
+        case GAME_RESULT_PLAYING:
+            break;
+        case GAME_RESULT_WHITE_WINS:
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", "Game Over! White Wins!", NULL);
+            break;
+        case GAME_RESULT_BLACK_WINS:
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", "Game Over! Black Wins!", NULL);
+            break;
+        case GAME_RESULT_DRAW:
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", "Game Over! It's a stalemate!", NULL);
+            break;
+    }
     SDL_INTERFACE_change_state(sdl_manager, SDL_INTERFACE_STATE_QUIT); // will terminate all windows
     free(sdl_manager);
 
-	SDL_Quit();
+    SDL_Quit();
 }
 
 void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFACE_STATE_E new_state)
