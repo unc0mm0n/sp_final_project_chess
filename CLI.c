@@ -452,7 +452,20 @@ void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
                         analysis = response.output.undo_data.undone_moves[i];
                         CLI_sq_to_str(analysis.move.from, from_str);
                         CLI_sq_to_str(analysis.move.to, to_str);
-                        printf("Undo move for player %s: %s -> %s\n", COLOR_STR(analysis.color), to_str, from_str);
+                        printf("Undo ");
+                        if (analysis.special_bm & GAME_SPECIAL_CASTLE)
+                        {
+                            printf("castle");
+                        }
+                        else if (analysis.special_bm & GAME_SPECIAL_PROMOTE)
+                        {
+                            printf("promotion");
+                        }
+                        else
+                        {
+                            printf("move");
+                        }
+                        printf(" for player %s: %s -> %s\n", COLOR_STR(analysis.color), to_str, from_str);
                     }
                     break;
                 }
