@@ -1,6 +1,7 @@
 CC=gcc
 H_FILES=DEFS.h PIECE.h # all files which are only headers will trigger compilation for everything on change.
-O_FILES=GAME.o MANAGER.o CLI.o SETTINGS.o AI.o HEAP.o SDL_UTILS.o SDL_BUTTON.o SDL_SETTINGS_WINDOW.o SDL_MAIN_WINDOW.o SDL_GAME_WINDOW.o SDL_INTERFACE.o main.o
+O_FILES=GAME.o FILES.o MANAGER.o CLI.o SETTINGS.o AI.o HEAP.o SDL_UTILS.o SDL_BUTTON.o SDL_SETTINGS_WINDOW.o\
+	   	SDL_MAIN_WINDOW.o SDL_LOAD_WINDOW.o SDL_GAME_WINDOW.o SDL_INTERFACE.o main.o
 C_FLAGS=-std=c99 -Wall -Wextra -g
 
 all: chessprog

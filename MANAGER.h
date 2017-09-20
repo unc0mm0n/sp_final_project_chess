@@ -128,10 +128,7 @@ typedef struct MANAGER_agent_play_command_s
        square sq;
 
        // SAVE acommand requires path of file to save to
-       struct {
-           char * name;
-           int length;
-       } filename;
+       char * filename;
     } data;
 } MANAGER_agent_play_command_t;
 

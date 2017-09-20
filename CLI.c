@@ -190,7 +190,6 @@ MANAGER_agent_settings_command_t CLI_prompt_settings_command(const SETTINGS_sett
         {
             command.type = MANAGER_SETTINGS_COMMAND_TYPE_LOAD;
             command.data.filename = strtok(NULL, SPLIT_TOKEN);
-            assert(0); // not yet implemented
         } else if (strcmp(token, "default") == 0)
         {
             command.type = MANAGER_SETTINGS_COMMAND_TYPE_DEFAULT_SETTINGS;
@@ -294,7 +293,7 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t *p_a_boa
         else if (strcmp(token, "save") == 0)
         {
             command.type = MANAGER_PLAY_COMMAND_TYPE_SAVE;
-            assert(0); // not yet supported.
+            command.data.filename = strtok(NULL, SPLIT_TOKEN);
         }
         else if (strcmp(token, "get_moves") == 0)
         {
@@ -332,49 +331,72 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t *p_a_boa
 
 void CLI_handle_settings_command_response(MANAGER_agent_settings_command_t command, MANAGER_agent_settings_command_response_t response)
 {
-    if (command.type == MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING)
+    switch (command.type)
     {
-        assert(response.has_output);
-        switch (response.output.settings_change_result)
-        {
-        case SETTINGS_CHANGE_RESULT_INVALID_MODE:
+        case  MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING:
             {
-                printf("Wrong game mode\n");
-                break;
-            }
-        case SETTINGS_CHANGE_RESULT_INVALID_COLOR:
-            {
-                printf("Invalid color\n");
-                break;
-            }
-        case SETTINGS_CHANGE_RESULT_INVALID_DIFFICULTY:
-            {
-                printf("Wrong difficulty level. The value should be between 1 to 5\n");
-                break;
-            }
-        case SETTINGS_CHANGE_RESULT_WRONG_MODE:
-            {
-                printf("Command is not supported in current game mode\n");
-                break;
-            }
-        default:
-            if (command.data.change_setting.setting == SETTINGS_SETTING_GAME_MODE)
-            {
-                if (command.data.change_setting.value == 1)
+                assert(response.has_output);
+                switch (response.output.settings_change_result)
                 {
-                    printf("Game mode is set to 1 player\n");
-                } 
-                else if (command.data.change_setting.value == 2)
+                    case SETTINGS_CHANGE_RESULT_INVALID_MODE:
+                        {
+                            printf("Wrong game mode\n");
+                            break;
+                        }
+                    case SETTINGS_CHANGE_RESULT_INVALID_COLOR:
+                        {
+                            printf("Invalid color\n");
+                            break;
+                        }
+                    case SETTINGS_CHANGE_RESULT_INVALID_DIFFICULTY:
+                        {
+                            printf("Wrong difficulty level. The value should be between 1 to 5\n");
+                            break;
+                        }
+                    case SETTINGS_CHANGE_RESULT_WRONG_MODE:
+                        {
+                            printf("Command is not supported in current game mode\n");
+                            break;
+                        }
+                    default:
+                        if (command.data.change_setting.setting == SETTINGS_SETTING_GAME_MODE)
+                        {
+                            if (command.data.change_setting.value == 1)
+                            {
+                                printf("Game mode is set to 1 player\n");
+                            } 
+                            else if (command.data.change_setting.value == 2)
+                            {
+                                printf("Game mode is set to 2 players\n");
+                            } 
+                            else
+                            {
+                                assert(0);
+                            }
+                        }
+
+                }
+            break;
+            }
+        case MANAGER_SETTINGS_COMMAND_TYPE_LOAD:
+            {
+                assert(response.has_output);
+                if (response.output.load_succesful)
                 {
-                    printf("Game mode is set to 2 players\n");
-                } 
+                    printf("Load succesful\n");
+                }
                 else
                 {
-                    assert(0);
+                    printf("Error: File doesn't exist or cannot be opened\n");
                 }
+                break;
             }
+        case MANAGER_SETTINGS_COMMAND_TYPE_NONE:
+        case MANAGER_SETTINGS_COMMAND_TYPE_START_GAME:
+        case MANAGER_SETTINGS_COMMAND_TYPE_QUIT:
+        case MANAGER_SETTINGS_COMMAND_TYPE_DEFAULT_SETTINGS:
+            break;
 
-        }
     }
 }
 
@@ -384,200 +406,214 @@ void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
 
     switch (command.type)
     {
-    case MANAGER_PLAY_COMMAND_TYPE_MOVE:
-        {
-            GAME_move_analysis_t analysis = response.output.move_data.move_result.move_analysis;
-            switch (analysis.verdict)
+        case MANAGER_PLAY_COMMAND_TYPE_MOVE:
             {
-            case GAME_MOVE_VERDICT_LEGAL: // legal move prints
+                GAME_move_analysis_t analysis = response.output.move_data.move_result.move_analysis;
+                switch (analysis.verdict)
                 {
-                    switch (response.output.move_data.game_result)
-                    {
-                    case GAME_RESULT_DRAW:
-                        printf("The game ends in a tie\n");
-                        break;
-                    case GAME_RESULT_BLACK_WINS:
-                        printf("Checkmate! black player wins the game\n");
-                        break;
-                    case GAME_RESULT_WHITE_WINS:
-                        printf("Checkmate! white player wins the game\n");
-                        break;
-                    default:
-                        if ((analysis.special_bm & GAME_SPECIAL_CHECK) > 0)
+                    case GAME_MOVE_VERDICT_LEGAL: // legal move prints
                         {
-                            if (analysis.color == WHITE)
+                            switch (response.output.move_data.game_result)
                             {
-                                printf("Check: black King is threatend!\n");
-                            } else
-                            {
-                                printf("Check: white King is threatend!\n");
+                                case GAME_RESULT_DRAW:
+                                    printf("The game ends in a tie\n");
+                                    break;
+                                case GAME_RESULT_BLACK_WINS:
+                                    printf("Checkmate! black player wins the game\n");
+                                    break;
+                                case GAME_RESULT_WHITE_WINS:
+                                    printf("Checkmate! white player wins the game\n");
+                                    break;
+                                default:
+                                    if ((analysis.special_bm & GAME_SPECIAL_CHECK) > 0)
+                                    {
+                                        if (analysis.color == WHITE)
+                                        {
+                                            printf("Check: black King is threatend!\n");
+                                        } else
+                                        {
+                                            printf("Check: white King is threatend!\n");
+                                        }
+                                    }
+                                    break;
                             }
+
+                            gs_board_printed = FALSE;
+                            break;
+                        } // case GAME_MOVE_VERDICT_LEGAL:
+                    case GAME_MOVE_VERDICT_ILLEGAL_SQUARE: // original square is invalid
+                        {
+                            printf("Invalid position on the board\n");
+                            break;
+                        }
+                    case GAME_MOVE_VERDICT_NO_PIECE: // original square has friendly piece
+                        {
+                            printf("The specified position does not contain your piece\n");
+                            break;
+                        }
+                    default: // move is illegal for some other reason
+                        {
+                            printf("Illegal move\n");
+                            break;
+                        }
+                } // switch(analysis.verdict)
+                break;
+            } // case MANAGER_PLAY_COMMAND_TYPE_MOVE
+        case MANAGER_PLAY_COMMAND_TYPE_UNDO:
+            {
+
+                switch (response.output.undo_data.undo_result)
+                {
+                    case MANAGER_UNDO_RESULT_SUCCESS: // undo was succesfull
+                        {
+                            gs_board_printed = FALSE;
+                            char from_str[6], to_str[6];
+                            GAME_move_analysis_t analysis;
+                            for (int i = 0; i < 2; i++)
+                            {
+                                analysis = response.output.undo_data.undone_moves[i];
+                                CLI_sq_to_str(analysis.move.from, from_str);
+                                CLI_sq_to_str(analysis.move.to, to_str);
+                                printf("Undo ");
+                                if (analysis.special_bm & GAME_SPECIAL_CASTLE)
+                                {
+                                    printf("castle");
+                                }
+                                else if (analysis.special_bm & GAME_SPECIAL_PROMOTE)
+                                {
+                                    printf("promotion");
+                                }
+                                else
+                                {
+                                    printf("move");
+                                }
+                                printf(" for player %s: %s -> %s\n", COLOR_STR(analysis.color), to_str, from_str);
+                            }
+                            break;
+                        }
+                    case MANAGER_UNDO_RESULT_FAIL_TWO_PLAYERS: // invalid mode for undo
+                        {
+                            printf("Undo command not available in 2 players mode\n");
+                            break;
+                        }
+                    case MANAGER_UNDO_RESULT_FAIL_NO_HISTORY: // no undos are possible
+                        {
+                            printf("Empty history, move cannot be undone\n");
+                            break;
                         }
                         break;
-                    }
-
-                    gs_board_printed = FALSE;
-                    break;
-                } // case GAME_MOVE_VERDICT_LEGAL:
-            case GAME_MOVE_VERDICT_ILLEGAL_SQUARE: // original square is invalid
-                {
-                    printf("Invalid position on the board\n");
-                    break;
-                }
-            case GAME_MOVE_VERDICT_NO_PIECE: // original square has friendly piece
-                {
-                    printf("The specified position does not contain your piece\n");
-                    break;
-                }
-            default: // move is illegal for some other reason
-                {
-                    printf("Illegal move\n");
-                    break;
-                }
-            } // switch(analysis.verdict)
-            break;
-        } // case MANAGER_PLAY_COMMAND_TYPE_MOVE
-    case MANAGER_PLAY_COMMAND_TYPE_UNDO:
-        {
-
-            switch (response.output.undo_data.undo_result)
+                } // switch(response.output.undo_data.undo_result)
+            } // case MANAGER_PLAY_COMMAND_TYPE_UNDO
+        case MANAGER_PLAY_COMMAND_TYPE_QUIT:
             {
-            case MANAGER_UNDO_RESULT_SUCCESS: // undo was succesfull
-                {
-                    gs_board_printed = FALSE;
-                    char from_str[6], to_str[6];
-                    GAME_move_analysis_t analysis;
-                    for (int i = 0; i < 2; i++)
-                    {
-                        analysis = response.output.undo_data.undone_moves[i];
-                        CLI_sq_to_str(analysis.move.from, from_str);
-                        CLI_sq_to_str(analysis.move.to, to_str);
-                        printf("Undo ");
-                        if (analysis.special_bm & GAME_SPECIAL_CASTLE)
-                        {
-                            printf("castle");
-                        }
-                        else if (analysis.special_bm & GAME_SPECIAL_PROMOTE)
-                        {
-                            printf("promotion");
-                        }
-                        else
-                        {
-                            printf("move");
-                        }
-                        printf(" for player %s: %s -> %s\n", COLOR_STR(analysis.color), to_str, from_str);
-                    }
-                    break;
-                }
-            case MANAGER_UNDO_RESULT_FAIL_TWO_PLAYERS: // invalid mode for undo
-                {
-                    printf("Undo command not available in 2 players mode\n");
-                    break;
-                }
-            case MANAGER_UNDO_RESULT_FAIL_NO_HISTORY: // no undos are possible
-                {
-                    printf("Empty history, move cannot be undone\n");
-                    break;
-                }
-                break;
-            } // switch(response.output.undo_data.undo_result)
-        } // case MANAGER_PLAY_COMMAND_TYPE_UNDO
-    case MANAGER_PLAY_COMMAND_TYPE_QUIT:
-        {
-            break;
-        }
-    case MANAGER_PLAY_COMMAND_TYPE_RESET:
-        {
-            gs_board_printed = FALSE;
-            gs_settings_intro_printed = FALSE;
-            printf("Restarting...\n");
-            break;
-        }
-    case MANAGER_PLAY_COMMAND_TYPE_GET_MOVES:
-        {
-            GAME_move_analysis_t *analyses = response.output.get_moves_data.moves;
-
-            if (analyses == NULL)
-            {
-                printf("The specified position does not contain %s player piece\n", COLOR_STR(response.output.get_moves_data.player_color));
                 break;
             }
-
-            GAME_move_analysis_t *tmp = analyses;
-            char to_str[6];
-            while (tmp->verdict == GAME_MOVE_VERDICT_LEGAL) // loop one on moves
+        case MANAGER_PLAY_COMMAND_TYPE_RESET:
             {
-                //printf("analyzing\n");
-                if (tmp->special_bm & GAME_SPECIAL_CASTLE)
-                {
-                    tmp++;
-                    continue; // castles are handled in the second loop
-                }
-
-                CLI_sq_to_str(tmp->move.to, to_str);
-
-                printf("%s", to_str);
-                if (response.output.get_moves_data.display_hints)
-                {
-                    if (tmp->special_bm & GAME_SPECIAL_UNDER_ATTACK)
-                    {
-                        printf("*");
-                    }
-                    if (tmp->special_bm & GAME_SPECIAL_CAPTURE)
-                    {
-                        printf("^");
-                    }
-                }
-                printf(" ");
-                tmp++;
-            }
-            tmp = analyses;
-            while (tmp->verdict == GAME_MOVE_VERDICT_LEGAL) // loop 2 on castles
-            {
-                if (!(tmp->special_bm & GAME_SPECIAL_CASTLE))
-                {
-                    tmp++;
-                    continue;
-                }
-
-                if (SQ_TO_FILE(tmp->move.to) == SQ_TO_FILE(C1)) // queenside castle
-                {
-                    CLI_sq_to_str(SQ_LEFT(SQ_LEFT(tmp->move.to)), to_str);
-                } else
-                {
-                    CLI_sq_to_str(SQ_RIGHT(tmp->move.to), to_str);
-                }
-
-                printf("castle %s", to_str);
-                printf(" ");
-                tmp++;
-            }
-            printf("\n");
-            free(analyses);
-            break;
-        } //case MANAGERT_PLAY_COMMAND_TYPE_GET_MOVES:
-    case MANAGER_PLAY_COMMAND_TYPE_CASTLE:
-        {
-            switch (response.output.castle_data.castle_result) 
-            {
-            case MANAGER_CASTLE_RESULT_FAIL_NO_ROOK:
-                {
-                    printf("Wrong position for rook\n");
-                    break;
-                }
-            case MANAGER_CASTLE_RESULT_FAIL:
-                {
-                    printf("Illegal castling move\n");
-                    break;
-                }
-            case MANAGER_CASTLE_RESULT_SUCCESS:
                 gs_board_printed = FALSE;
+                gs_settings_intro_printed = FALSE;
+                printf("Restarting...\n");
                 break;
             }
-        }
-    case MANAGER_PLAY_COMMAND_TYPE_NONE:
-    case MANAGER_PLAY_COMMAND_TYPE_RESTART:
-        break; // commands not relevant to CLI mode
+        case MANAGER_PLAY_COMMAND_TYPE_GET_MOVES:
+            {
+                GAME_move_analysis_t *analyses = response.output.get_moves_data.moves;
+
+                if (analyses == NULL)
+                {
+                    printf("The specified position does not contain %s player piece\n", COLOR_STR(response.output.get_moves_data.player_color));
+                    break;
+                }
+
+                GAME_move_analysis_t *tmp = analyses;
+                char to_str[6];
+                while (tmp->verdict == GAME_MOVE_VERDICT_LEGAL) // loop one on moves
+                {
+                    //printf("analyzing\n");
+                    if (tmp->special_bm & GAME_SPECIAL_CASTLE)
+                    {
+                        tmp++;
+                        continue; // castles are handled in the second loop
+                    }
+
+                    CLI_sq_to_str(tmp->move.to, to_str);
+
+                    printf("%s", to_str);
+                    if (response.output.get_moves_data.display_hints)
+                    {
+                        if (tmp->special_bm & GAME_SPECIAL_UNDER_ATTACK)
+                        {
+                            printf("*");
+                        }
+                        if (tmp->special_bm & GAME_SPECIAL_CAPTURE)
+                        {
+                            printf("^");
+                        }
+                    }
+                    printf(" ");
+                    tmp++;
+                }
+                tmp = analyses;
+                while (tmp->verdict == GAME_MOVE_VERDICT_LEGAL) // loop 2 on castles
+                {
+                    if (!(tmp->special_bm & GAME_SPECIAL_CASTLE))
+                    {
+                        tmp++;
+                        continue;
+                    }
+
+                    if (SQ_TO_FILE(tmp->move.to) == SQ_TO_FILE(C1)) // queenside castle
+                    {
+                        CLI_sq_to_str(SQ_LEFT(SQ_LEFT(tmp->move.to)), to_str);
+                    } else
+                    {
+                        CLI_sq_to_str(SQ_RIGHT(tmp->move.to), to_str);
+                    }
+
+                    printf("castle %s", to_str);
+                    printf(" ");
+                    tmp++;
+                }
+                printf("\n");
+                free(analyses);
+                break;
+            } //case MANAGERT_PLAY_COMMAND_TYPE_GET_MOVES:
+        case MANAGER_PLAY_COMMAND_TYPE_CASTLE:
+            {
+                switch (response.output.castle_data.castle_result) 
+                {
+                    case MANAGER_CASTLE_RESULT_FAIL_NO_ROOK:
+                        {
+                            printf("Wrong position for rook\n");
+                            break;
+                        }
+                    case MANAGER_CASTLE_RESULT_FAIL:
+                        {
+                            printf("Illegal castling move\n");
+                            break;
+                        }
+                    case MANAGER_CASTLE_RESULT_SUCCESS:
+                        gs_board_printed = FALSE;
+                        break;
+                }
+            }
+        case MANAGER_PLAY_COMMAND_TYPE_SAVE:
+            {
+                assert (response.has_output);
+                if (response.output.save_succesful)
+                {
+                    printf("Save successful.\n");
+                }
+                else
+                {
+                    printf("File cannot be created or modified\n");
+                }
+
+                break;
+            }
+        case MANAGER_PLAY_COMMAND_TYPE_NONE:
+        case MANAGER_PLAY_COMMAND_TYPE_RESTART:
+            break; // commands not relevant to CLI mode
     } // switch(command.type)
 }
 

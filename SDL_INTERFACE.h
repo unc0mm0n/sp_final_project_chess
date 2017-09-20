@@ -12,6 +12,7 @@
 #include "GAME.h"
 #include "SDL_GAME_WINDOW.h"
 #include "SDL_MAIN_WINDOW.h"
+#include "SDL_LOAD_WINDOW.h"
 #include "SDL_SETTINGS_WINDOW.h"
 #include "SDL_BUTTON.h"
 #include "SDL_UTILS.h"
@@ -21,6 +22,7 @@ typedef struct SDL_INTERFACE_manager_s
 	SDL_GAME_WINDOW_view_t* game_window;
     SDL_MAIN_WINDOW_view_t* main_window;
 	SDL_SETTINGS_WINDOW_view_t* settings_window;
+	SDL_LOAD_WINDOW_view_t* load_window;
 	SDL_INTERFACE_STATE_E state;
 
 } SDL_INTERFACE_manager_t;

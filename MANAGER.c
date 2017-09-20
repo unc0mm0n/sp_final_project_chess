@@ -4,6 +4,7 @@
 
 #include "MANAGER.h"
 #include "AI.h"
+#include "FILES.h"
 
 /***** Private functions *****/
 
@@ -37,6 +38,11 @@ void _MANAGER_handle_settings(MANAGER_managed_game_t *p_a_manager)
                 break;
             }
         case MANAGER_SETTINGS_COMMAND_TYPE_LOAD:
+            {
+                response.has_output = TRUE;
+                response.output.load_succesful = (FILES_load_file(command.data.filename, p_a_manager->p_settings, p_a_manager->p_board) == 0);
+                break;
+            }
         case MANAGER_SETTINGS_COMMAND_TYPE_NONE:
             response.has_output = FALSE;
             break; // not yet supported
@@ -217,9 +223,11 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
                 p_a_manager->undo_count = 0;
                 break;
             }
-        default:
-            assert(0);
-            break;
+        case MANAGER_PLAY_COMMAND_TYPE_SAVE:
+            {
+                response.has_output = TRUE;
+                response.output.save_succesful = (FILES_save_file(command.data.filename, p_a_manager->p_settings, p_a_manager->p_board) == 0);
+            }
     }
 
     p_a_manager->play_agents[game_current_player].handle_play_command_response(command, response);

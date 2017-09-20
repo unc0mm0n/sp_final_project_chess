@@ -58,6 +58,7 @@ dkms.conf
 
 # Windows file
 desktop.ini
+*.xml
 
 # vim file
 *.sw*

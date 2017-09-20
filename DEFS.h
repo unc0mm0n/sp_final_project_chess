@@ -46,6 +46,7 @@
 typedef uint8_t square; // bits 0-3 bits indicate the file and bits 4-6 indicate the rank. Bits 3 and 7 are for control.
 
 #define SQ_FROM_FILE_RANK(f, r) ((square) (((7 - (r)) << 4) + (f)))  // get a square using file and rank.
+#define SQ_FROM_RANK_FILE(r, f) (SQ_FROM_FILE_RANK(f,r))
 #define SQ_TO_FILE(sq) ((int) ((sq) & 7))                    // get a file using square
 #define SQ_TO_RANK(sq) (7 - (int) (((sq) >> 4) & 7))             // get a rank using square
 #define SQ_IS_LEGAL(sq)  (!((sq) & 0x88))                      // check if square is a legal square (using control bits, assuming type square)

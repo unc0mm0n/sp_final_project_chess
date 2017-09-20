@@ -61,6 +61,13 @@ MANAGER_agent_settings_command_t _SDL_INTERFACE_prompt_settings(const SETTINGS_s
                     act.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_QUIT;
 					break;
                 }
+            case SDL_INTERFACE_STATE_LOAD:
+                {
+                    SDL_LOAD_WINDOW_draw_view(sdl_manager->load_window);
+                    SDL_WaitEvent(&event);
+                    act = SDL_LOAD_WINDOW_handle_event(sdl_manager->load_window, &event);
+                    break;
+                }
             default:
                 {
                     assert(0);
@@ -87,6 +94,10 @@ void _SDL_INTERFACE_handle_play_command_response(MANAGER_agent_play_command_t co
     else if (command.type == MANAGER_PLAY_COMMAND_TYPE_RESET)
     { 
         SDL_INTERFACE_change_state(sdl_manager, SDL_INTERFACE_STATE_MAIN_MENU);
+    }
+    else if (command.type == MANAGER_PLAY_COMMAND_TYPE_SAVE && response.has_output && (!response.output.save_succesful))
+    {
+        SDL_UTILS_unroll_saves(".");
     }
 }
 
@@ -182,12 +193,12 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
             p_manager->game_window = NULL;
             break;
         case SDL_INTERFACE_STATE_LOAD:
-            assert(0);
+            SDL_LOAD_WINDOW_destroy_view(p_manager->load_window);
+            p_manager->load_window = NULL;
+            break;
         default:
             break;
     }
-
-    p_manager->state = new_state;
 
     switch (new_state) // create new view
     {
@@ -215,11 +226,21 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
                 p_manager->state = SDL_INTERFACE_STATE_QUIT;            
             }
             break;
+        case SDL_INTERFACE_STATE_POST_LOAD: // we do not display a window, but wait for a settings command
         case SDL_INTERFACE_STATE_QUIT:
             break;
         case SDL_INTERFACE_STATE_LOAD:
+            p_manager->load_window = SDL_LOAD_WINDOW_create_view(p_manager->state);
+            if (p_manager->load_window == NULL) // SDL or allocation error
+            {
+                printf("ERROR: Unable to load load window (%s)\n", SDL_GetError());
+                p_manager->state = SDL_INTERFACE_STATE_QUIT;            
+            }
+            break;
         case SDL_INTERFACE_STATE_INVALID:
             assert(0);
     }
+    
+    p_manager->state = new_state;
 
 }

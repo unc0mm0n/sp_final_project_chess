@@ -54,6 +54,19 @@ SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_quit_button_cb()
     return cmd;
 }
 
+SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_save_button_cb()
+{
+    char savefile[SDL_MAX_FILENAME];
+    SDL_BUTTON_action_t cmd;
+    cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+    cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_SAVE;
+    SDL_UTILS_get_save_path(".", 1, savefile);
+    cmd.play_cmd.data.filename = savefile;
+
+    SDL_UTILS_roll_saves(".");
+    return cmd;
+}
+
 // Get square based on board location clicked
 square _SDL_GAME_WINDOW_get_sq_from_x_y(int x, int y)
 {
@@ -187,7 +200,7 @@ SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
     BOOL success = TRUE; // check if any of the operations failed
     success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/newgame.bmp", NULL, _SDL_GAME_WINDOW_play_new_game_button_cb);
     success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/loadgame.bmp", NULL, NULL); 
-    success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/savegame.bmp", NULL, NULL); 
+    success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/savegame.bmp", NULL, _SDL_GAME_WINDOW_play_save_button_cb); 
     success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/mainmenu.bmp", NULL, _SDL_GAME_WINDOW_play_main_menu_button_cb); 
     success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/last_move.bmp", "./graphics/undo_i.bmp", _SDL_GAME_WINDOW_play_last_move_button_cb); 
     p_view->undo_button = p_view->buttons[p_view->button_count-1];
