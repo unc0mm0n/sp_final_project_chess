@@ -64,13 +64,12 @@ BOOL _CLI_is_int(const char *str)
 
 void CLI_handle_quit(GAME_RESULT_E result)
 {
-    if (result == GAME_RESULT_PLAYING)
+    if (result != GAME_RESULT_PLAYING)
     {
-        result = 0;
+        return;
     }
     // CLI doesn't allocate resources, therefore handling quit is easy.
     printf("Exiting...\n");
-    return;
 }
 
 MANAGER_settings_agent_t CLI_get_settings_agent()
@@ -146,7 +145,7 @@ MANAGER_agent_settings_command_t CLI_prompt_settings_command(const SETTINGS_sett
         printf("Specify game setting or type 'start' to begin a game with the current setting:\n");
         gs_settings_intro_printed = TRUE;
     }
-    printf("<settings> ");
+    //printf("<settings> ");
     fgets(gs_command_buffer, MAX_INPUT_SIZE, stdin);
 
     if (gs_command_buffer[0] == '\n')
@@ -199,7 +198,7 @@ MANAGER_agent_settings_command_t CLI_prompt_settings_command(const SETTINGS_sett
         } else if (strcmp(token, "start") == 0)
         {
             command.type = MANAGER_SETTINGS_COMMAND_TYPE_START_GAME;
-        } else if (strcmp(token, "print_settings") == 0)
+        } else if (strcmp(token, "print_setting") == 0)
         {
             CLI_print_settings(p_a_settings);
             command.type = MANAGER_SETTINGS_COMMAND_TYPE_NONE;
@@ -381,11 +380,7 @@ void CLI_handle_settings_command_response(MANAGER_agent_settings_command_t comma
         case MANAGER_SETTINGS_COMMAND_TYPE_LOAD:
             {
                 assert(response.has_output);
-                if (response.output.load_succesful)
-                {
-                    printf("Load succesful\n");
-                }
-                else
+                if (!response.output.load_succesful)
                 {
                     printf("Error: File doesn't exist or cannot be opened\n");
                 }
@@ -487,7 +482,7 @@ void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
                                 {
                                     printf("move");
                                 }
-                                printf(" for player %s: %s -> %s\n", COLOR_STR(analysis.color), to_str, from_str);
+                                printf(" for player %s : %s -> %s\n", COLOR_STR(analysis.color), to_str, from_str);
                             }
                             break;
                         }
@@ -600,11 +595,7 @@ void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
         case MANAGER_PLAY_COMMAND_TYPE_SAVE:
             {
                 assert (response.has_output);
-                if (response.output.save_succesful)
-                {
-                    printf("Save successful.\n");
-                }
-                else
+                if (!response.output.save_succesful)
                 {
                     printf("File cannot be created or modified\n");
                 }

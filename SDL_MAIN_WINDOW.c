@@ -40,7 +40,7 @@ SDL_MAIN_WINDOW_view_t* SDL_MAIN_WINDOW_create_view()
         return NULL;
     }
 
-    SDL_Window* window = SDL_CreateWindow("Tests", SDL_WINDOWPOS_CENTERED,
+    SDL_Window* window = SDL_CreateWindow("Main", SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED, MAIN_WINDOW_W, MAIN_WINDOW_H, SDL_WINDOW_OPENGL);
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1,

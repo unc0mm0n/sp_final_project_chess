@@ -205,9 +205,9 @@ GAME_move_analysis_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_mo
     move_analysis.verdict = GAME_MOVE_VERDICT_LEGAL;
 
     //printf("analyzing: %d %d %d %d\n", player, a_move.from, a_move.to, p_a_board->colors[a_move.from]);
-    PRUNE_ILLEGAL(a_move.to != a_move.from, move_analysis);
     PRUNE(SQ_IS_LEGAL(a_move.from), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_SQUARE) // from square not on board.
     PRUNE(SQ_IS_LEGAL(a_move.to), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_SQUARE) // to square not on board.
+    PRUNE_ILLEGAL(a_move.to != a_move.from, move_analysis); // squares are different
     PRUNE((p_a_board->colors[a_move.from] == player), move_analysis, GAME_MOVE_VERDICT_NO_PIECE) // empty or opponent piece
     PRUNE(SQ_IS_LEGAL(a_move.to), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_MOVE); // if to square is invalid, it's an illegal move.
     BOOL is_capture = (p_a_board->colors[a_move.to] == OTHER_COLOR(player));

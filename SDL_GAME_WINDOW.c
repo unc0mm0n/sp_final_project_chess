@@ -269,7 +269,7 @@ SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
     {
         return NULL;
     }
-    SDL_Window* window = SDL_CreateWindow("Tests", SDL_WINDOWPOS_CENTERED,
+    SDL_Window* window = SDL_CreateWindow("Game", SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED, GAME_WINDOW_W, GAME_WINDOW_H, SDL_WINDOW_OPENGL);
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1,

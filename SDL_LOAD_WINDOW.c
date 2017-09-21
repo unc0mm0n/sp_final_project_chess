@@ -60,7 +60,7 @@ SDL_LOAD_WINDOW_view_t* SDL_LOAD_WINDOW_create_view(SDL_INTERFACE_STATE_E origin
         return NULL;
     }
 
-    SDL_Window* window = SDL_CreateWindow("Tests", SDL_WINDOWPOS_CENTERED,
+    SDL_Window* window = SDL_CreateWindow("Load", SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED, LOAD_WINDOW_W, LOAD_WINDOW_H, SDL_WINDOW_OPENGL);
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1,
