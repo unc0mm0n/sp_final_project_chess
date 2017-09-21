@@ -10,13 +10,14 @@ chessprog: $(O_FILES)
 	$(CC) -o $@ $(C_FLAGS) $^ -L/usr/local/lib/sdl_2.0.5/lib -Wl,-rpath,/usr/local/lib/sdl_2.0.5/lib -Wl,--enable-new-dtags -lSDL2 -lSDL2main
 
 %.o: %.c %.h $(H_FILES)
-	$(CC) -c $< $(C_FLAGS) -I/usr/include/SDL2 -D_REENTRANT
-#	$(CC) -c $< $(C_FLAGS) -I/usr/local/lib/sdl_2.0.5/include/SDL2 -D_REENTRANT
+	$(CC) -c $< $(C_FLAGS) -I/usr/local/lib/sdl_2.0.5/include/SDL2 -D_REENTRANT
+#	$(CC) -c $< $(C_FLAGS) -I/usr/include/SDL2 -D_REENTRANT
 
 
 main.o: main.c $(H_FILES)
-	$(CC) -c $< $(C_FLAGS) -I/usr/include/SDL2 -D_REENTRANT
-#	$(CC) -c $< $(C_FLAGS) -I/usr/local/lib/sdl_2.0.5/include/SDL2 -D_REENTRANT
+	$(CC) -c $< $(C_FLAGS) -I/usr/local/lib/sdl_2.0.5/include/SDL2 -D_REENTRANT
+#	$(CC) -c $< $(C_FLAGS) -I/usr/include/SDL2 -D_REENTRANT
+
 .PHONY: clean
 
 clean:
