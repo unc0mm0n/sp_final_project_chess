@@ -160,21 +160,21 @@ void _GAME_update_castle_bm(int * p_a_castle_bm, GAME_move_t a_move)
 {
     if (a_move.from == A1 || a_move.to == A1 || a_move.from == E1) // we do not need to check move to E1, as king can't be captured
     {
-        p_a_castle_bm[WHITE] = DISABLE_CASTLE(p_a_castle_bm[WHITE], GAME_CASTLE_QUEENSIDE);
+        GAME_DISABLE_CASTLE(p_a_castle_bm[WHITE], GAME_CASTLE_QUEENSIDE);
     }
 
     if (a_move.from == H1 || a_move.to == H1 || a_move.from == E1)
     {
-        p_a_castle_bm[WHITE] = DISABLE_CASTLE(p_a_castle_bm[WHITE], GAME_CASTLE_KINGSIDE);
+        GAME_DISABLE_CASTLE(p_a_castle_bm[WHITE], GAME_CASTLE_KINGSIDE);
     }
     if (a_move.from == A8 || a_move.to == A8 || a_move.from == E8)
     {
-        p_a_castle_bm[BLACK] = DISABLE_CASTLE(p_a_castle_bm[BLACK], GAME_CASTLE_QUEENSIDE);
+        GAME_DISABLE_CASTLE(p_a_castle_bm[BLACK], GAME_CASTLE_QUEENSIDE);
     }
 
     if (a_move.from == H8 || a_move.to == H8 || a_move.from == E8)
     {
-        p_a_castle_bm[BLACK] = DISABLE_CASTLE(p_a_castle_bm[BLACK], GAME_CASTLE_KINGSIDE);
+        GAME_DISABLE_CASTLE(p_a_castle_bm[BLACK], GAME_CASTLE_KINGSIDE);
     }
 
 }
@@ -207,6 +207,7 @@ GAME_move_analysis_t _GAME_analayze_move(const GAME_board_t * p_a_board, GAME_mo
     //printf("analyzing: %d %d %d %d\n", player, a_move.from, a_move.to, p_a_board->colors[a_move.from]);
     PRUNE_ILLEGAL(a_move.to != a_move.from, move_analysis);
     PRUNE(SQ_IS_LEGAL(a_move.from), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_SQUARE) // from square not on board.
+    PRUNE(SQ_IS_LEGAL(a_move.to), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_SQUARE) // to square not on board.
     PRUNE((p_a_board->colors[a_move.from] == player), move_analysis, GAME_MOVE_VERDICT_NO_PIECE) // empty or opponent piece
     PRUNE(SQ_IS_LEGAL(a_move.to), move_analysis, GAME_MOVE_VERDICT_ILLEGAL_MOVE); // if to square is invalid, it's an illegal move.
     BOOL is_capture = (p_a_board->colors[a_move.to] == OTHER_COLOR(player));

@@ -185,7 +185,7 @@ MANAGER_agent_settings_command_t CLI_prompt_settings_command(const SETTINGS_sett
             {
                 token = "-1"; // Input not an integer
             }
-            command.data.change_setting.value = atoi(token); // todo verify integer
+            command.data.change_setting.value = atoi(token);
         } else if (strcmp(token, "load") == 0)
         {
             command.type = MANAGER_SETTINGS_COMMAND_TYPE_LOAD;
@@ -257,7 +257,7 @@ MANAGER_agent_play_command_t CLI_prompt_play_command(const GAME_board_t *p_a_boa
                 BOOL chose_piece = FALSE;
                 while (!chose_piece)
                 {
-                    printf("Pawn promotion- please replace the pawn by queen, rook, knight, bishop or pawn:\n"); // todo - remove the pawn.
+                    printf("Pawn promotion- please replace the pawn by queen, rook, knight, bishop or pawn:\n"); // todo - remove the pawn after submission
 
                     fgets(gs_command_buffer, MAX_INPUT_SIZE, stdin);
                     token = strtok(gs_command_buffer, SPLIT_TOKEN);
@@ -614,6 +614,9 @@ void CLI_handle_play_command_response(MANAGER_agent_play_command_t command, MANA
         case MANAGER_PLAY_COMMAND_TYPE_NONE:
         case MANAGER_PLAY_COMMAND_TYPE_RESTART:
             break; // commands not relevant to CLI mode
+        case MANAGER_PLAY_COMMAND_TYPE_LOAD:
+            assert(0);
+            break;
     } // switch(command.type)
 }
 

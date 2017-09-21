@@ -37,8 +37,8 @@ typedef struct PIECE_desc_s
 {
     PIECE_TYPE_E    type;                           // piece type
     char*           name;
-    int             value;                          // Value of AI evaluation [YVW TODO: Maybe move to AI]
-    char            letters[NUM_PLAYERS];           // letters per color      [YVW TODO: Maybe move to CLI]
+    int             value;                          // Value of AI evaluation
+    char            letters[NUM_PLAYERS];           // letters per color
     int             offsets[PIECE_MAX_OFFSETS];     // possible move offsets + sentinel value 0.
     BOOL            slides;                         // if TRUE, the piece can move it's offsets multiple times
     BOOL            can_promote_to;                 // True if the piece can be promoted to.

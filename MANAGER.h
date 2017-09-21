@@ -24,7 +24,7 @@ typedef enum MANAGER_STATE_S
     MANAGER_STATE_PRE_PLAY,  // state after start was called where settings are used to populate everything
     MANAGER_STATE_PLAY,      // state for playing the game after game start was called
     MANAGER_STATE_QUIT,      // state for quitting the game and shutting down the manager
-    MANAGER_STATE_INVALID    // state following illegal operations [TODO: probably remove]
+    MANAGER_STATE_INVALID
 } MANAGER_STATE_E;
 
 /**
@@ -50,10 +50,11 @@ typedef enum MANAGER_PLAY_COMMAND_TYPE_S
     MANAGER_PLAY_COMMAND_TYPE_CASTLE,
     MANAGER_PLAY_COMMAND_TYPE_GET_MOVES,
     MANAGER_PLAY_COMMAND_TYPE_SAVE,
+    MANAGER_PLAY_COMMAND_TYPE_LOAD,
     MANAGER_PLAY_COMMAND_TYPE_UNDO,
     MANAGER_PLAY_COMMAND_TYPE_RESET, // go back to settings
     MANAGER_PLAY_COMMAND_TYPE_RESTART, // start a new game with same settings
-    MANAGER_PLAY_COMMAND_TYPE_QUIT
+    MANAGER_PLAY_COMMAND_TYPE_QUIT,
 } MANAGER_PLAY_COMMAND_TYPE_E;
 
 /**
@@ -129,6 +130,7 @@ typedef struct MANAGER_agent_play_command_s
 
        // SAVE acommand requires path of file to save to
        char * filename;
+
     } data;
 } MANAGER_agent_play_command_t;
 
@@ -159,6 +161,7 @@ typedef struct  MANAGER_agent_play_command_response_s
         } castle_data;
 
         BOOL            save_succesful; // SAVE command
+        BOOL            load_succesful; // LOAD command
 
         struct {
             MANAGER_UNDO_RESULT_E      undo_result;

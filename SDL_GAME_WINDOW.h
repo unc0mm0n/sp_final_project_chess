@@ -25,6 +25,11 @@
 
 #define GAME_WINDOW_MAX_BUTTONS ((GAME_WINDOW_H - 2*(BUTTON_PADDING)) / (BUTTON_AREA_HEIGHT))
 
+#define GAME_WINDOW_SAVE_PROMPT_YES    (0)
+#define GAME_WINDOW_SAVE_PROMPT_NO     (1)
+#define GAME_WINDOW_SAVE_PROMPT_CANCEL (2)
+
+
 
 typedef struct
 {
@@ -87,5 +92,10 @@ void SDL_GAME_WINDOW_draw_view(SDL_GAME_WINDOW_view_t* p_view, const GAME_board_
  * @param event SDL event that occured.
  */
 SDL_BUTTON_action_t SDL_GAME_WINDOW_handle_event(SDL_GAME_WINDOW_view_t* p_view, SDL_Event* event, const GAME_board_t* p_board);
+
+/**
+ * Set whether the game have been saved or should be saved.
+ */
+void SDL_GAME_WINDOW_toggle_save(BOOL state);
 
 #endif /*SDL_GAME_WINDOW_IMP*/

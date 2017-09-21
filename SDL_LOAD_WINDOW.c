@@ -1,56 +1,51 @@
 #include "SDL_LOAD_WINDOW.h"
 #include <assert.h>
 
+/***** global variables *****/
+
+static int gs_active_slot;
+static char gs_filename_buffer[SDL_MAX_FILENAME];
+
 /***** Private functiosn *****/
 
 /** Button callbacks **/
 
-SDL_BUTTON_action_t _SDL_LOAD_WINDOW_back_button_cb()
+SDL_BUTTON_action_t _SDL_LOAD_WINDOW_back_button_cb(int origin)
 { 
     SDL_BUTTON_action_t cmd;
     cmd.action = SDL_BUTTON_ACTION_CHANGE_STATE;
-    cmd.new_state = SDL_INTERFACE_STATE_MAIN_MENU;
+    cmd.new_state = origin;
     return cmd;
 }
 
-SDL_BUTTON_action_t _SDL_LOAD_WINDOW_start_button_cb()
+SDL_BUTTON_action_t _SDL_LOAD_WINDOW_load_button_cb(int origin)
 { 
     SDL_BUTTON_action_t cmd;
-    cmd.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
-    cmd.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_START_GAME;
+
+    SDL_UTILS_get_save_path(".", gs_active_slot, gs_filename_buffer);
+
+    if (origin == (int) SDL_INTERFACE_STATE_MAIN_MENU)
+    {
+        cmd.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
+        cmd.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_LOAD;
+        cmd.settings_cmd.data.filename = gs_filename_buffer;
+    }
+    else
+    {
+        cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+        cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_LOAD;
+        cmd.play_cmd.data.filename = gs_filename_buffer;
+    }
 
     return cmd;
 }
 
-SDL_BUTTON_action_t _SDL_LOAD_WINDOW_change_difficulty(int val)
+SDL_BUTTON_action_t _SDL_LOAD_WINDOW_choose_slot_cb(int val)
 {
     SDL_BUTTON_action_t cmd;
-    cmd.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
-    cmd.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING;
-    cmd.settings_cmd.data.change_setting.setting = SETTINGS_SETTING_DIFFICULTY;
-    cmd.settings_cmd.data.change_setting.value = val;
-    return cmd;
-}
+    cmd.action = SDL_BUTTON_ACTION_NONE;
 
-SDL_BUTTON_action_t _SDL_LOAD_WINDOW_change_color(int val)
-{
-
-    SDL_BUTTON_action_t cmd;
-    cmd.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
-    cmd.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING;
-    cmd.settings_cmd.data.change_setting.setting = SETTINGS_SETTING_USER_COLOR;
-    cmd.settings_cmd.data.change_setting.value = val;
-    return cmd;
-}
-
-SDL_BUTTON_action_t _SDL_LOAD_WINDOW_change_game_mode(int val)
-{
-
-    SDL_BUTTON_action_t cmd;
-    cmd.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
-    cmd.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING;
-    cmd.settings_cmd.data.change_setting.setting = SETTINGS_SETTING_GAME_MODE;
-    cmd.settings_cmd.data.change_setting.value = val;
+    gs_active_slot = val;
     return cmd;
 }
 
@@ -84,8 +79,7 @@ SDL_LOAD_WINDOW_view_t* SDL_LOAD_WINDOW_create_view(SDL_INTERFACE_STATE_E origin
 
     p_view->window = window;
     p_view->renderer = renderer;
-    p_view->origin = origin;
-    p_view->active_slot = -1;
+    gs_active_slot = -1;
 
     p_view->button_count = 0;
 
@@ -110,7 +104,7 @@ SDL_LOAD_WINDOW_view_t* SDL_LOAD_WINDOW_create_view(SDL_INTERFACE_STATE_E origin
             p_view->active_marks[i] = p_view->buttons[p_view->button_count - 1]; // remember last button added
 
             sprintf(namebuff, "./graphics/slot%d.bmp", i+1);
-            success &= SDL_LOAD_WINDOW_add_button(p_view, right, namebuff, namebuff, NULL, i+1);
+            success &= SDL_LOAD_WINDOW_add_button(p_view, right, namebuff, namebuff, _SDL_LOAD_WINDOW_choose_slot_cb, i+1);
         }
         else
         {
@@ -123,9 +117,9 @@ SDL_LOAD_WINDOW_view_t* SDL_LOAD_WINDOW_create_view(SDL_INTERFACE_STATE_E origin
     right.x += (-LOAD_WINDOW_SMALL_BUTTON_W + LOAD_WINDOW_BUTTON_W + LOAD_WINDOW_BUTTON_SPACING) - 60;
     left.x -= 60;
     left.w = LOAD_WINDOW_BUTTON_W;
-    success &= SDL_LOAD_WINDOW_add_button(p_view, left, "./graphics/cancel.bmp", NULL, NULL, 0);
-    success &= SDL_LOAD_WINDOW_add_button(p_view, right, "./graphics/loadgame.bmp", NULL, NULL, 0);
-
+    success &= SDL_LOAD_WINDOW_add_button(p_view, left, "./graphics/cancel.bmp", NULL, _SDL_LOAD_WINDOW_back_button_cb, origin);
+    success &= SDL_LOAD_WINDOW_add_button(p_view, right, "./graphics/loadgame.bmp", "./graphics/undo_i.bmp", _SDL_LOAD_WINDOW_load_button_cb, origin);
+    p_view->load_button = p_view->buttons[p_view->button_count - 1];
     if (!success) 
     {
         SDL_LOAD_WINDOW_destroy_view(p_view);
@@ -183,9 +177,14 @@ void SDL_LOAD_WINDOW_draw_view(SDL_LOAD_WINDOW_view_t* p_view)
         }
     }
 
-    if (p_view->active_slot > 0)
+    if (gs_active_slot > 0)
     {
-        p_view->active_marks[p_view->active_slot]->is_active = TRUE;
+        p_view->active_marks[gs_active_slot - 1]->is_active = TRUE;
+        p_view->load_button->is_active = TRUE;
+    }
+    else
+    {
+        p_view->load_button->is_active = FALSE;
     }
 
     for (int i=0; i < p_view->button_count; i++)

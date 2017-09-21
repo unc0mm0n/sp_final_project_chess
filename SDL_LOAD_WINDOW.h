@@ -34,12 +34,11 @@ typedef struct
 	SDL_Renderer* renderer;             // SDL renderer to use
     SDL_button_t** buttons;
     SDL_button_t* active_marks[SDL_MAX_SAVES]; // points to marks that should be active on selection
+    SDL_button_t* load_button;
+
 
     int button_count;
     int active_slot;                    // active save slot
-
-    SDL_INTERFACE_STATE_E origin;       // state to go to after "back"
-
 } SDL_LOAD_WINDOW_view_t;
 
 /**

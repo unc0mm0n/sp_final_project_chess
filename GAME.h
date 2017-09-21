@@ -21,7 +21,7 @@
 #define GAME_NO_SQUARE          ((square) 0x88)
 
 // Disable castle c in bitmask bm
-#define DISABLE_CASTLE(bm, c)   ((bm) &(~ (c)))
+#define GAME_DISABLE_CASTLE(bm, c)   (bm = ((bm) &(~ (c))))
 
 /**
  * Allowed castle types for bitmask

@@ -11,19 +11,51 @@ static SDL_INTERFACE_manager_t* sdl_manager = NULL; // a singleton global sdl ma
 /** agent callbacks **/
 MANAGER_agent_play_command_t _SDL_INTERFACE_prompt_play(const GAME_board_t* p_board, BOOL can_undo)
 {
-    assert(sdl_manager != NULL && sdl_manager->state == SDL_INTERFACE_STATE_GAME); // make sure init was called and game started
-
     SDL_BUTTON_action_t act;
     SDL_Event event;
 
+    if (sdl_manager->next_cmd.type != MANAGER_PLAY_COMMAND_TYPE_NONE)
+    {
+        act.play_cmd = sdl_manager->next_cmd;
+        sdl_manager->next_cmd.type = MANAGER_PLAY_COMMAND_TYPE_NONE;
+        return act.play_cmd;
+    }
     act.action = SDL_BUTTON_ACTION_NONE;
     do // handle events until we find a command to send
     {
-        SDL_GAME_WINDOW_draw_view(sdl_manager->game_window, p_board, can_undo);
-        SDL_WaitEvent(&event);
-        act = SDL_GAME_WINDOW_handle_event(sdl_manager->game_window, &event, p_board);
+        switch (sdl_manager->state)
+        {
+            case SDL_INTERFACE_STATE_GAME:
+                {
+                    SDL_GAME_WINDOW_draw_view(sdl_manager->game_window, p_board, can_undo);
+                    SDL_WaitEvent(&event);
+                    act = SDL_GAME_WINDOW_handle_event(sdl_manager->game_window, &event, p_board);
+                    break;
+                }
 
-    } while (act.action != SDL_BUTTON_ACTION_SEND_PLAY_CMD);
+            case SDL_INTERFACE_STATE_LOAD:
+                {
+                    SDL_LOAD_WINDOW_draw_view(sdl_manager->load_window);
+                    SDL_WaitEvent(&event);
+                    act = SDL_LOAD_WINDOW_handle_event(sdl_manager->load_window, &event);
+                    break;
+                }
+            default:
+                assert(0);
+                break;
+        }
+        if (act.action == SDL_BUTTON_ACTION_CHANGE_STATE)
+        {
+            SDL_INTERFACE_change_state(sdl_manager, act.new_state);
+        }
+        if (act.action == SDL_BUTTON_ACTION_SEND_PLAY_CMD_PAIR)
+        {
+            sdl_manager->next_cmd = act.play_cmds[1];
+            act.play_cmd = act.play_cmds[0];
+            act.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD; 
+        }
+    }
+    while (act.action != SDL_BUTTON_ACTION_SEND_PLAY_CMD);
 
     return act.play_cmd; // return the command
 }
@@ -59,13 +91,19 @@ MANAGER_agent_settings_command_t _SDL_INTERFACE_prompt_settings(const SETTINGS_s
                 {
                     act.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
                     act.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_QUIT;
-					break;
+                    break;
                 }
             case SDL_INTERFACE_STATE_LOAD:
                 {
                     SDL_LOAD_WINDOW_draw_view(sdl_manager->load_window);
                     SDL_WaitEvent(&event);
                     act = SDL_LOAD_WINDOW_handle_event(sdl_manager->load_window, &event);
+                    break;
+                }
+            case SDL_INTERFACE_STATE_POST_LOAD:
+                {
+                    act.action = SDL_BUTTON_ACTION_SEND_SETTINGS_CMD;
+                    act.settings_cmd.type = MANAGER_SETTINGS_COMMAND_TYPE_START_GAME;
                     break;
                 }
             default:
@@ -95,9 +133,26 @@ void _SDL_INTERFACE_handle_play_command_response(MANAGER_agent_play_command_t co
     { 
         SDL_INTERFACE_change_state(sdl_manager, SDL_INTERFACE_STATE_MAIN_MENU);
     }
-    else if (command.type == MANAGER_PLAY_COMMAND_TYPE_SAVE && response.has_output && (!response.output.save_succesful))
+    else if (command.type == MANAGER_PLAY_COMMAND_TYPE_SAVE && response.has_output)
     {
-        SDL_UTILS_unroll_saves(".");
+        if (!response.output.save_succesful)
+        {
+            SDL_UTILS_unroll_saves(".");
+        }
+        else
+        {
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Saved!", "Saved!", NULL);
+            SDL_GAME_WINDOW_toggle_save(TRUE);
+        }
+    }
+    else if (command.type == MANAGER_PLAY_COMMAND_TYPE_LOAD && response.has_output && response.output.load_succesful)
+    {
+        SDL_INTERFACE_change_state(sdl_manager, SDL_INTERFACE_STATE_GAME);
+        SDL_GAME_WINDOW_toggle_save(TRUE);
+    }
+    else if (command.type == MANAGER_PLAY_COMMAND_TYPE_MOVE && response.has_output && response.output.move_data.move_result.played)
+    {
+        SDL_GAME_WINDOW_toggle_save(FALSE);
     }
 }
 
@@ -110,6 +165,10 @@ void _SDL_INTERFACE_handle_settings_command_response(MANAGER_agent_settings_comm
     if (command.type == MANAGER_SETTINGS_COMMAND_TYPE_CHANGE_SETTING)
     {
         assert(response.has_output && response.output.settings_change_result == SETTINGS_CHANGE_RESULT_SUCCESS);
+    }
+    if (command.type == MANAGER_SETTINGS_COMMAND_TYPE_LOAD && response.has_output && response.output.load_succesful)
+    {
+        SDL_INTERFACE_change_state(sdl_manager, SDL_INTERFACE_STATE_POST_LOAD);
     }
 }
 
@@ -128,6 +187,7 @@ void SDL_INTERFACE_init()
     sdl_manager->game_window = NULL;
     sdl_manager->settings_window = NULL;
     sdl_manager->main_window = NULL;
+    sdl_manager->next_cmd.type = MANAGER_PLAY_COMMAND_TYPE_NONE;
 
     SDL_INTERFACE_change_state(sdl_manager, SDL_INTERFACE_STATE_MAIN_MENU);
 }
@@ -240,7 +300,7 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
         case SDL_INTERFACE_STATE_INVALID:
             assert(0);
     }
-    
+
     p_manager->state = new_state;
 
 }

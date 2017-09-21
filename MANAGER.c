@@ -67,7 +67,6 @@ void _MANAGER_handle_settings(MANAGER_managed_game_t *p_a_manager)
  */
 void _MANAGER_handle_pre_play(MANAGER_managed_game_t *p_a_manager)
 {
-    /*TODO: implement this, for now we just start a two player game*/
 
     if (p_a_manager->p_settings->game_mode == 2)
     {
@@ -78,7 +77,6 @@ void _MANAGER_handle_pre_play(MANAGER_managed_game_t *p_a_manager)
     {
         p_a_manager->play_agents[p_a_manager->p_settings->user_color] = p_a_manager->settings_agent.get_play_agent();
         p_a_manager->play_agents[OTHER_COLOR(p_a_manager->p_settings->user_color)] = AI_get_play_agent(p_a_manager->p_settings->difficulty);
-        //p_a_manager->play_agents[BLACK] = AI_get_play_agent(2);
     }
     else
     {
@@ -104,7 +102,6 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
 
     // prompt for action from the current player.
     command = p_a_manager->play_agents[game_current_player].prompt_play_command(p_a_manager->p_board, MANAGER_can_undo(p_a_manager));
-
     switch (command.type)
     {
         case MANAGER_PLAY_COMMAND_TYPE_MOVE: // attempt to make move and notify results
@@ -227,6 +224,17 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
             {
                 response.has_output = TRUE;
                 response.output.save_succesful = (FILES_save_file(command.data.filename, p_a_manager->p_settings, p_a_manager->p_board) == 0);
+                break;
+            }
+        case MANAGER_PLAY_COMMAND_TYPE_LOAD:
+            {
+                response.has_output = TRUE;
+                response.output.load_succesful = (FILES_load_file(command.data.filename, p_a_manager->p_settings, p_a_manager->p_board) == 0);
+                if (response.output.load_succesful)
+                {
+                    p_a_manager->undo_count = 0;
+                }
+                break;
             }
     }
 
@@ -238,16 +246,25 @@ void _MANAGER_handle_play(MANAGER_managed_game_t *p_a_manager)
 MANAGER_managed_game_t* MANAGER_new_managed_game(MANAGER_settings_agent_t settings_agent, void (*quit)(GAME_RESULT_E result))
 {
     MANAGER_managed_game_t *p_manager = (MANAGER_managed_game_t *)malloc(sizeof(MANAGER_managed_game_t));
-    assert(p_manager != NULL); // TODO: not assert here.
+    if (p_manager == NULL)
+    {
+        printf("ERROR: Unable to allocate manager,\n");
+        quit(GAME_RESULT_PLAYING);
+    }
 
     p_manager->settings_agent = settings_agent;         // keep the settings agent
     p_manager->state = MANAGER_STATE_INIT;              // and start at the init state
     p_manager->p_board = GAME_new_board();              // allocate a board
-    assert(p_manager->p_board != NULL);                // TODO: possibly not assert here.
     p_manager->p_settings = SETTINGS_new_settings();    // TBD
-    assert(p_manager->p_settings != NULL);             // TODO: possibly not assert here.
+    
     p_manager->undo_count = 0;
     p_manager->handle_quit = quit;
+
+    if(p_manager->p_board == NULL || p_manager->p_settings == NULL)
+    {
+        p_manager->state = MANAGER_STATE_QUIT;
+        printf("ERROR: Unable to allocate manager,\n");
+    }
 
     return p_manager;
 }

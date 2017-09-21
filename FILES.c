@@ -207,6 +207,38 @@ int FILES_load_file(const char* fname, SETTINGS_settings_t* p_settings, GAME_boa
     p_board->castle_bm[0] = GAME_CASTLE_ALL;
     p_board->castle_bm[1] = GAME_CASTLE_ALL;
 
+    // disable castles if king/rook not in place
+    if (p_board->pieces[E1] != PIECE_TYPE_KING || p_board->colors[E1] != WHITE)
+    {
+        GAME_DISABLE_CASTLE(p_board->castle_bm[WHITE], GAME_CASTLE_ALL);
+    }
+    else 
+    {
+        if (p_board->pieces[A1] != PIECE_TYPE_ROOK || p_board->colors[A1] != WHITE)
+        {
+            GAME_DISABLE_CASTLE(p_board->castle_bm[WHITE], GAME_CASTLE_QUEENSIDE);
+        }
+        if (p_board->pieces[H1] != PIECE_TYPE_ROOK || p_board->colors[H1] != WHITE)
+        {
+            GAME_DISABLE_CASTLE(p_board->castle_bm[WHITE], GAME_CASTLE_KINGSIDE);
+        }
+    }
+    if (p_board->pieces[E8] != PIECE_TYPE_KING || p_board->colors[E8] != BLACK)
+    {
+        GAME_DISABLE_CASTLE(p_board->castle_bm[BLACK], GAME_CASTLE_ALL);
+    }
+    else 
+    {
+        if (p_board->pieces[A8] != PIECE_TYPE_ROOK || p_board->colors[A8] != BLACK)
+        {
+            GAME_DISABLE_CASTLE(p_board->castle_bm[BLACK], GAME_CASTLE_QUEENSIDE);
+        }
+        if (p_board->pieces[H8] != PIECE_TYPE_ROOK || p_board->colors[H8] != BLACK)
+        {
+            GAME_DISABLE_CASTLE(p_board->castle_bm[BLACK], GAME_CASTLE_KINGSIDE);
+        }
+    }
+
     fclose(lfile);
 
     return 0;

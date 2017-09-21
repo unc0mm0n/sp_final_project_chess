@@ -23,10 +23,11 @@
  */
 typedef enum SDL_BUTTON_ACTION_TYPE_S
 {
-    SDL_BUTTON_ACTION_NONE,              // do nothing
-    SDL_BUTTON_ACTION_CHANGE_STATE,      // Change the interface state
-    SDL_BUTTON_ACTION_SEND_SETTINGS_CMD, // send settings command
-    SDL_BUTTON_ACTION_SEND_PLAY_CMD      // send play command
+    SDL_BUTTON_ACTION_NONE,                 // do nothing
+    SDL_BUTTON_ACTION_CHANGE_STATE,         // Change the interface state
+    SDL_BUTTON_ACTION_SEND_SETTINGS_CMD,    // send settings command
+    SDL_BUTTON_ACTION_SEND_PLAY_CMD,        // send play command
+    SDL_BUTTON_ACTION_SEND_PLAY_CMD_PAIR    // Send a pair of consecutive play commands 
 } SDL_BUTTON_ACTION_TYPE_E;
 
 /**
@@ -40,6 +41,7 @@ typedef struct SDL_BUTTON_action_s
         MANAGER_agent_settings_command_t settings_cmd;
         MANAGER_agent_play_command_t play_cmd;
         SDL_INTERFACE_STATE_E new_state;
+        MANAGER_agent_play_command_t play_cmds[2]; // command pair
     };
 } SDL_BUTTON_action_t;
 

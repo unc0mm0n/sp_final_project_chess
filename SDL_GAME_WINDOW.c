@@ -15,18 +15,53 @@ static const SDL_Color GAME_WINDOW_ACTIVE_SQ_C = {.r = 0, .g = 255, .b = 255, .a
 static const SDL_Color GAME_WINDOW_CHECK_SQ_C = {.r = 255, .g= 100, .b= 100, .a=255};
 
 static const SDL_Color GAME_WINDOW_MARKED_SQ_C = {.r = 255, .g= 255, .b= 255, .a=255};
-static const SDL_Color GAME_WINDOW_MARKED_CASTLE_SQ_C = {.r = 0, .g= 0, .b= 0, .a=255};
+static const SDL_Color GAME_WINDOW_MARKED_CASTLE_SQ_C = {.r = 0, .g= 0, .b=255, .a=255};
 static const SDL_Color GAME_WINDOW_MARKED_UNDER_ATTACK_SQ_C = {.r = 255, .g= 255, .b= 100, .a=255};
 static const SDL_Color GAME_WINDOW_MARKED_CAPTURE_SQ_C = {.r = 100, .g= 255, .b= 100, .a=255};
 
+static BOOL gs_saved;
+static char gs_filename_buffer[SDL_MAX_FILENAME];
+
 /***** Private methods *****/
 
+int _SDL_GAME_WINDOW_prompt_leave();
+
 // button callbacks
+SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_save_button_cb()
+{
+    SDL_BUTTON_action_t cmd;
+    cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+    cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_SAVE;
+    SDL_UTILS_get_save_path(".", 1, gs_filename_buffer);
+    cmd.play_cmd.data.filename = gs_filename_buffer;
+    SDL_UTILS_roll_saves(".");
+    return cmd;
+}
+
 SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_new_game_button_cb()
 {
     SDL_BUTTON_action_t cmd;
     cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
-    cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_RESTART;
+    int action = GAME_WINDOW_SAVE_PROMPT_NO;
+    if (!gs_saved)
+    {
+        action = _SDL_GAME_WINDOW_prompt_leave();
+    }
+    if (action == GAME_WINDOW_SAVE_PROMPT_YES)
+    {
+        cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD_PAIR;
+        cmd.play_cmds[0] = _SDL_GAME_WINDOW_play_save_button_cb().play_cmd;
+        cmd.play_cmds[1].type = MANAGER_PLAY_COMMAND_TYPE_RESTART;
+    }
+    else if (action == GAME_WINDOW_SAVE_PROMPT_NO)
+    {
+        cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+        cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_RESTART;
+    }
+    else
+    {
+        cmd.action = SDL_BUTTON_ACTION_NONE;
+    }
     return cmd;
 }
 
@@ -34,7 +69,26 @@ SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_main_menu_button_cb()
 {
     SDL_BUTTON_action_t cmd;
     cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
-    cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_RESET;
+    int action = GAME_WINDOW_SAVE_PROMPT_NO;
+    if (!gs_saved)
+    {
+        action = _SDL_GAME_WINDOW_prompt_leave();
+    }
+    if (action == GAME_WINDOW_SAVE_PROMPT_YES)
+    {
+        cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD_PAIR;
+        cmd.play_cmds[0] = _SDL_GAME_WINDOW_play_save_button_cb().play_cmd;
+        cmd.play_cmds[1].type = MANAGER_PLAY_COMMAND_TYPE_RESET;
+    }
+    else if (action == GAME_WINDOW_SAVE_PROMPT_NO)
+    {
+        cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+        cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_RESET;
+    }
+    else
+    {
+        cmd.action = SDL_BUTTON_ACTION_NONE;
+    }
     return cmd;
 }
 
@@ -46,24 +100,39 @@ SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_last_move_button_cb()
     return cmd;
 }
 
+
+
 SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_quit_button_cb()
 {
     SDL_BUTTON_action_t cmd;
-    cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
-    cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_QUIT;
+    int action = GAME_WINDOW_SAVE_PROMPT_NO;
+    if (!gs_saved)
+    {
+        action = _SDL_GAME_WINDOW_prompt_leave();
+    }
+    if (action == GAME_WINDOW_SAVE_PROMPT_YES)
+    {
+        cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD_PAIR;
+        cmd.play_cmds[0] = _SDL_GAME_WINDOW_play_save_button_cb().play_cmd;
+        cmd.play_cmds[1].type = MANAGER_PLAY_COMMAND_TYPE_QUIT;
+    }
+    else if (action == GAME_WINDOW_SAVE_PROMPT_NO)
+    {
+        cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+        cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_QUIT;
+    }
+    else
+    {
+        cmd.action = SDL_BUTTON_ACTION_NONE;
+    }
     return cmd;
 }
 
-SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_save_button_cb()
+SDL_BUTTON_action_t _SDL_GAME_WINDOW_play_load_button_cb()
 {
-    char savefile[SDL_MAX_FILENAME];
     SDL_BUTTON_action_t cmd;
-    cmd.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
-    cmd.play_cmd.type = MANAGER_PLAY_COMMAND_TYPE_SAVE;
-    SDL_UTILS_get_save_path(".", 1, savefile);
-    cmd.play_cmd.data.filename = savefile;
-
-    SDL_UTILS_roll_saves(".");
+    cmd.action = SDL_BUTTON_ACTION_CHANGE_STATE;
+    cmd.new_state = SDL_INTERFACE_STATE_LOAD;
     return cmd;
 }
 
@@ -73,6 +142,50 @@ square _SDL_GAME_WINDOW_get_sq_from_x_y(int x, int y)
     return SQ_FROM_FILE_RANK( (x - BOARD_OFFSET_H) / CELL_SIZE, 7 - (y / CELL_SIZE));
 }
 
+int _SDL_GAME_WINDOW_prompt_leave()
+{
+    SDL_MessageBoxButtonData buttons[] = 
+    {
+        {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, GAME_WINDOW_SAVE_PROMPT_YES, "yes"},
+        {0, GAME_WINDOW_SAVE_PROMPT_NO, "no"},
+        {SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, GAME_WINDOW_SAVE_PROMPT_CANCEL, "cancel"}
+    };
+
+    const SDL_MessageBoxColorScheme colorScheme = {
+        { /* .colors (.r, .g, .b) */
+            /* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
+            { GAME_WINDOW_BG_C.r, GAME_WINDOW_BG_C.g, GAME_WINDOW_BG_C.b },
+            /* [SDL_MESSAGEBOX_COLOR_TEXT] */
+            { 255, 255, 255 },
+            /* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
+            { 0, 0, 0 },
+            /* [SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND] */
+            { 0, 0, 0 },
+            /* [SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED] */
+            { 150, 150, 150 }
+        }
+    };
+    const SDL_MessageBoxData messageboxdata = {
+        SDL_MESSAGEBOX_INFORMATION, /* .flags */
+        NULL, /* .window */
+        "Save", /* .title */
+        "The game is not saved! Would you like to save?", /* .message */
+        3, /* .numbuttons */
+        buttons, /* .buttons */
+        &colorScheme /* .colorScheme */
+    };
+
+    int buttonid;
+    if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0) {
+        printf("ERROR: displaying promotion message box");
+        return 0;
+    }
+    if (buttonid == -1) {
+        printf("ERROR: no selection");
+    }
+
+    return buttonid;
+}
 // Prompt the screen for a promoted piece
 PIECE_TYPE_E _SDL_GAME_WINDOW_prompt_promote(SDL_GAME_WINDOW_view_t* p_view)
 {
@@ -84,7 +197,6 @@ PIECE_TYPE_E _SDL_GAME_WINDOW_prompt_promote(SDL_GAME_WINDOW_view_t* p_view)
         PIECE_desc_t desc = PIECE_desc_lut[i];
         if (desc.can_promote_to)
         {
-            buttons[cnt].flags = SDL_MESSAGEBOX_INFORMATION;
             buttons[cnt].buttonid = i;
             buttons[cnt].text = desc.name;
             cnt++;
@@ -148,6 +260,7 @@ void _SDL_GAME_WINDOW_draw_piece_at_rect(SDL_GAME_WINDOW_view_t* p_view, PIECE_T
 }
 
 /***** Public functions *****/
+
 SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
 {
     SDL_GAME_WINDOW_view_t* p_view = malloc(sizeof(SDL_GAME_WINDOW_view_t));
@@ -168,7 +281,7 @@ SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
     p_view->buttons = malloc(sizeof(SDL_button_t) * GAME_WINDOW_MAX_BUTTONS);
 
     p_view->bg_texture = SDL_UTILS_load_texture_from_bmp("./graphics/bg.bmp", renderer, FALSE);
-
+    gs_saved = TRUE;
 
 
     p_view->window = window;
@@ -199,13 +312,13 @@ SDL_GAME_WINDOW_view_t* SDL_GAME_WINDOW_create_view()
     p_view->button_count = 0;
     BOOL success = TRUE; // check if any of the operations failed
     success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/newgame.bmp", NULL, _SDL_GAME_WINDOW_play_new_game_button_cb);
-    success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/loadgame.bmp", NULL, NULL); 
+    success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/loadgame.bmp", NULL, _SDL_GAME_WINDOW_play_load_button_cb); 
     success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/savegame.bmp", NULL, _SDL_GAME_WINDOW_play_save_button_cb); 
     success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/mainmenu.bmp", NULL, _SDL_GAME_WINDOW_play_main_menu_button_cb); 
     success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/last_move.bmp", "./graphics/undo_i.bmp", _SDL_GAME_WINDOW_play_last_move_button_cb); 
     p_view->undo_button = p_view->buttons[p_view->button_count-1];
     success &= SDL_GAME_WINDOW_add_button(p_view, "./graphics/quit.bmp", NULL, _SDL_GAME_WINDOW_play_quit_button_cb); 
-    
+
     if (window == NULL || renderer == NULL || p_view->pieces_texture_white == NULL || p_view->pieces_texture_black == NULL
             || p_view->buttons == NULL || p_view->bg_texture == NULL || (!success)) 
     {
@@ -461,9 +574,9 @@ SDL_BUTTON_action_t SDL_GAME_WINDOW_handle_event(SDL_GAME_WINDOW_view_t* p_view,
     }
     else if (event->type == SDL_MOUSEBUTTONDOWN)
     {
-        if (event->button.button == SDL_BUTTON_LEFT)
+        if (event->button.x > BOARD_OFFSET_H) // board click
         {
-            if (event->button.x > BOARD_OFFSET_H) // board click
+            if (event->button.button == SDL_BUTTON_LEFT)
             {
                 square sq = _SDL_GAME_WINDOW_get_sq_from_x_y(event->button.x, event->button.y);
                 if (p_board->colors[sq] == GAME_current_player(p_board))
@@ -471,13 +584,18 @@ SDL_BUTTON_action_t SDL_GAME_WINDOW_handle_event(SDL_GAME_WINDOW_view_t* p_view,
                     p_view->active_sq = sq;
                 }
             }
+
+            act.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
+            square sq = _SDL_GAME_WINDOW_get_sq_from_x_y(event->button.x, event->button.y);
+            cmd.type = MANAGER_PLAY_COMMAND_TYPE_GET_MOVES;
+            cmd.data.sq = sq;
         }
-        act.action = SDL_BUTTON_ACTION_SEND_PLAY_CMD;
-        square sq = _SDL_GAME_WINDOW_get_sq_from_x_y(event->button.x, event->button.y);
-        cmd.type = MANAGER_PLAY_COMMAND_TYPE_GET_MOVES;
-        cmd.data.sq = sq;
     }
     act.play_cmd = cmd;
     return act;
 }
 
+void SDL_GAME_WINDOW_toggle_save(BOOL state)
+{
+    gs_saved = state;
+}

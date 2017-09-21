@@ -24,7 +24,7 @@ typedef struct SDL_INTERFACE_manager_s
 	SDL_SETTINGS_WINDOW_view_t* settings_window;
 	SDL_LOAD_WINDOW_view_t* load_window;
 	SDL_INTERFACE_STATE_E state;
-
+    MANAGER_agent_play_command_t next_cmd;
 } SDL_INTERFACE_manager_t;
 
 /**
