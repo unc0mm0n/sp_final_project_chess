@@ -52,7 +52,6 @@ SDL_MAIN_WINDOW_view_t* SDL_MAIN_WINDOW_create_view()
     {
         free(p_view->buttons);
         free(p_view);
-        //We first destroy the renderer
         SDL_DestroyRenderer(renderer); //NULL safe
         SDL_DestroyWindow(window); //NULL safe
         return NULL ;

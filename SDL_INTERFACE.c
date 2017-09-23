@@ -260,6 +260,9 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
             break;
     }
 
+	SDL_INTERFACE_STATE_E old_state = p_manager->state;
+    p_manager->state = new_state;
+
     switch (new_state) // create new view
     {
         case SDL_INTERFACE_STATE_MAIN_MENU:
@@ -290,7 +293,7 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
         case SDL_INTERFACE_STATE_QUIT:
             break;
         case SDL_INTERFACE_STATE_LOAD:
-            p_manager->load_window = SDL_LOAD_WINDOW_create_view(p_manager->state);
+            p_manager->load_window = SDL_LOAD_WINDOW_create_view(old_state);
             if (p_manager->load_window == NULL) // SDL or allocation error
             {
                 printf("ERROR: Unable to load load window (%s)\n", SDL_GetError());
@@ -301,6 +304,5 @@ void SDL_INTERFACE_change_state(SDL_INTERFACE_manager_t* p_manager, SDL_INTERFAC
             assert(0);
     }
 
-    p_manager->state = new_state;
 
 }
